@@ -12,6 +12,8 @@ wheels/
 # Backend uploads
 uploads/
 
+# Embeddings CSV (large, regeneratable)
+embeddings.csv
 
 data/
 
