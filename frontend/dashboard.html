@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Outfit Recommender</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="dashboard">
+    <header class="dashboard-header">
+      <h1>Outfit Recommender</h1>
+    </header>
+
+    <!-- Seed banner -->
+    <div id="seedBanner" class="seed-banner hidden">
+      <div class="seed-banner-content">
+        <strong>Database not seeded.</strong>
+        <span id="seedMsg">Load the 44K outfit embeddings from CSV to enable recommendations.</span>
+        <button class="btn btn-primary" id="seedBtn">Seed Database</button>
+      </div>
+      <div id="seedProgress" class="seed-progress hidden">
+        <span class="spinner" style="border-color:#fff;border-top-color:transparent"></span>
+        <span id="seedStatusText">Seeding database…</span>
+      </div>
+    </div>
+
+    <!-- Upload -->
+    <section class="upload-section">
+      <h2>Find similar outfits</h2>
+      <p>Upload a photo of an outfit to discover visually similar items.</p>
+
+      <div class="top-k-row">
+        <label for="topKSlider">Number of recommendations:</label>
+        <input type="range" id="topKSlider" min="1" max="20" value="5">
+        <span id="topKValue">5</span>
+      </div>
+
+      <div class="drop-zone" id="dropZone">
+        <div class="icon">📷</div>
+        <p>Drag & drop an image here, or click to browse</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" hidden>
+
+      <div class="preview-container" id="previewContainer">
+        <img id="previewImage" alt="Uploaded image">
+      </div>
+
+      <button class="btn btn-primary" id="recommendBtn" disabled>
+        Get Recommendations
+      </button>
+    </section>
+
+    <!-- Results -->
+    <section class="results-section" id="resultsSection">
+      <h2>Results</h2>
+      <div id="resultsContainer">
+        <div class="empty-state">
+          <div class="icon">🔍</div>
+          <p>Upload an image to see recommendations</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    // ── Check seed status ──────────────────────────────────────────
+    const seedBanner = document.getElementById("seedBanner");
+    const seedBtn = document.getElementById("seedBtn");
+    const seedMsg = document.getElementById("seedMsg");
+    const seedProgress = document.getElementById("seedProgress");
+    const seedStatusText = document.getElementById("seedStatusText");
+
+    async function checkSeed() {
+      try {
+        const res = await fetch(API_BASE_URL + "/api/seed/status");
+        const data = await res.json();
+        if (!data.seeded) {
+          seedBanner.classList.remove("hidden");
+        }
+      } catch {}
+    }
+    checkSeed();
+
+    seedBtn.addEventListener("click", async () => {
+      seedBtn.disabled = true;
+      seedMsg.classList.add("hidden");
+      seedProgress.classList.remove("hidden");
+      seedStatusText.textContent = "Seeding database… (may take a minute)";
+
+      try {
+        const res = await fetch(API_BASE_URL + "/api/seed", {
+          method: "POST",
+        });
+        const data = await res.json();
+        if (res.ok) {
+          seedStatusText.textContent = `✅ ${data.message}`;
+          setTimeout(() => {
+            seedBanner.classList.add("hidden");
+          }, 2000);
+        } else {
+          seedStatusText.textContent = `❌ ${data.detail || "Failed"}`;
+        }
+      } catch (err) {
+        seedStatusText.textContent = `❌ ${err.message}`;
+      } finally {
+        seedBtn.disabled = false;
+        seedProgress.classList.add("hidden");
+        seedMsg.classList.remove("hidden");
+      }
+    });
+
+    // ── Top-K slider ────────────────────────────────────────────────
+    const topKSlider = document.getElementById("topKSlider");
+    const topKValue = document.getElementById("topKValue");
+    topKSlider.addEventListener("input", () => {
+      topKValue.textContent = topKSlider.value;
+    });
+
+    // ── Drag & drop / file picker ───────────────────────────────────
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const previewContainer = document.getElementById("previewContainer");
+    const previewImage = document.getElementById("previewImage");
+    const recommendBtn = document.getElementById("recommendBtn");
+    const resultsContainer = document.getElementById("resultsContainer");
+
+    let selectedFile = null;
+
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      const files = e.dataTransfer.files;
+      if (files.length) handleFile(files[0]);
+    });
+
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files.length) handleFile(fileInput.files[0]);
+    });
+
+    function handleFile(file) {
+      if (!file.type.startsWith("image/")) {
+        alert("Please select an image file.");
+        return;
+      }
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        previewContainer.style.display = "block";
+        dropZone.classList.add("has-image");
+        recommendBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ── Recommend ───────────────────────────────────────────────────
+    recommendBtn.addEventListener("click", async () => {
+      if (!selectedFile) return;
+
+      const topK = parseInt(topKSlider.value, 10);
+      recommendBtn.disabled = true;
+      recommendBtn.innerHTML = '<span class="spinner"></span> Analysing…';
+      resultsContainer.innerHTML =
+        '<div class="empty-state"><div class="spinner" style="border-color:#4361ee;border-top-color:transparent;width:2rem;height:2rem;margin:0 auto .5rem"></div><p>Finding similar outfits…</p></div>';
+
+      try {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        const url = API_BASE_URL + `/api/recommend?top_k=${topK}`;
+        const res = await fetch(url, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (res.status === 404) {
+          resultsContainer.innerHTML = `
+            <div class="empty-state">
+              <div class="icon">📂</div>
+              <p>No embeddings in database. Seed the data first.</p>
+            </div>`;
+          return;
+        }
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Request failed");
+
+        renderResults(data.recommendations);
+      } catch (err) {
+        resultsContainer.innerHTML = `
+          <div class="alert alert-error">${err.message}</div>
+        `;
+      } finally {
+        recommendBtn.disabled = false;
+        recommendBtn.textContent = "Get Recommendations";
+      }
+    });
+
+    function renderResults(recommendations) {
+      if (!recommendations || recommendations.length === 0) {
+        resultsContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">😕</div>
+            <p>No similar outfits found.</p>
+          </div>`;
+        return;
+      }
+
+      const grid = document.createElement("div");
+      grid.className = "result-grid";
+
+      for (const rec of recommendations) {
+        const filename = rec.image_path.split("/").pop();
+        const score = (rec.similarity_score * 100).toFixed(1);
+        const barWidth = Math.max(4, rec.similarity_score * 100);
+
+        const card = document.createElement("div");
+        card.className = "result-card";
+        card.innerHTML = `
+          <div class="img-placeholder">
+            <img src="${API_BASE_URL}${rec.image_path}" alt="${filename}" onerror="this.parentElement.innerHTML='<span>${filename}</span>'">
+          </div>
+          <div class="info">
+            <div class="filename" title="${rec.image_path}">${filename}</div>
+            <div class="score-bar-bg">
+              <div class="score-bar-fill" style="width:${barWidth}%"></div>
+            </div>
+            <div class="score">${score}% match</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+
+      resultsContainer.innerHTML = "";
+      resultsContainer.appendChild(grid);
+    }
+  </script>
+</body>
+</html>
