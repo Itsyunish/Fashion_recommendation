@@ -1,0 +1,52 @@
+services:
+
+  db:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: outfit_user
+      POSTGRES_PASSWORD: outfit_pass
+      POSTGRES_DB: outfit_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U outfit_user -d outfit_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      CUDA_VISIBLE_DEVICES: -1
+      TF_CPP_MIN_LOG_LEVEL: 2
+      DATABASE_URL: postgresql+asyncpg://outfit_user:outfit_pass@db:5432/outfit_db
+      DATABASE_URL_SYNC: postgresql+psycopg2://outfit_user:outfit_pass@db:5432/outfit_db
+    volumes:
+      - ./backend:/app
+      - ./embeddings.csv:/app/embeddings.csv
+      - ./data/archive/images:/app/static/images
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+
+volumes:
+  pgdata:
