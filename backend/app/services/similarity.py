@@ -1,6 +1,5 @@
 """pgvector cosine-similarity search.
 
-Responsibility of **Team B**.
 """
 import numpy as np
 from sqlalchemy import text
