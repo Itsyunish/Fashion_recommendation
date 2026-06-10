@@ -17,3 +17,10 @@ embeddings.csv
 
 data/
 
+
+data_2/
+
+embeddings_3.csv
+
+*.zip
+

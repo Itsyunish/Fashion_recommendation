@@ -12,12 +12,15 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from sqlalchemy import text
 
 from app.database import get_db, init_db
 from app.schemas import RecommendResponse, RecommendationOut
 from app.services.feature_extractor import extract_features, get_model
-from app.services.image_repo import find_csv, get_embedding_count, seed_from_csv
+from app.services.image_repo import find_csv, get_embedding_count, get_style_by_image_path, seed_from_csv
 from app.models import Embedding
 from app.services.similarity import find_similar
 
@@ -70,6 +73,7 @@ async def recommend(
             RecommendationOut(
                 image_path=f"/images/{Path(path).name}",
                 similarity_score=score,
+                **(get_style_by_image_path(path) or {}),
             )
             for path, score in results
         ],
@@ -95,12 +99,11 @@ async def seed_embeddings(
     if csv_path is None:
         raise HTTPException(404, "embeddings.csv not found on server")
 
-    count = await get_embedding_count(db)
-    if count > 0:
-        return {"message": f"Already seeded ({count} embeddings present)", "source": str(csv_path)}
+    await db.execute(text("DELETE FROM embeddings"))
+    await db.commit()
 
     total = await seed_from_csv(db, str(csv_path))
-    return {"message": f"Seeded {total} embeddings", "source": str(csv_path)}
+    return {"message": f"Re-seeded {total} embeddings", "source": str(csv_path)}
 
 
 @app.post("/api/embeddings", status_code=201)
@@ -130,9 +133,16 @@ async def add_embedding(
 
 # ── Static file mounts ─────────────────────────────────────────────────────
 
+class _CORSStaticFiles(StaticFiles):
+    """StaticFiles that adds CORS headers (needed for findSimilar fetch)."""
+    async def get_response(self, path: str, scope) -> FileResponse:
+        response = await super().get_response(path, scope)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        return response
+
 images_dir = Path(__file__).resolve().parent.parent / "static" / "images"
 if images_dir.is_dir():
-    app.mount("/images", StaticFiles(directory=str(images_dir)), name="images")
+    app.mount("/images", _CORSStaticFiles(directory=str(images_dir)), name="images")
 
 frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
 if frontend_dir.is_dir():

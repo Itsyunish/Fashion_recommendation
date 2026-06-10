@@ -31,8 +31,10 @@ services:
       DATABASE_URL_SYNC: postgresql+psycopg2://outfit_user:outfit_pass@db:5432/outfit_db
     volumes:
       - ./backend:/app
-      - ./embeddings.csv:/app/embeddings.csv
-      - ./data/archive/images:/app/static/images
+      - ./embeddings_3.csv:/app/embeddings.csv
+      - "./data_2/archive (1)/fashion-dataset/images:/app/static/images"
+      - "./data_2/archive (1)/fashion-dataset/styles.csv:/app/static/styles.csv"
+      - "./data_2/archive (1)/fashion-dataset/styles:/app/static/styles"
     depends_on:
       db:
         condition: service_healthy
@@ -44,6 +46,8 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    volumes:
+      - "./data_2/archive (1)/fashion-dataset/images:/app/images"
     depends_on:
       - backend
 
