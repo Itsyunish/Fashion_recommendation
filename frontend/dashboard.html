@@ -3,83 +3,202 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — Outfit Recommender</title>
+  <title>Outfit Recommender</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="dashboard">
-    <header class="dashboard-header">
-      <h1>Outfit Recommender</h1>
-    </header>
-
-    <!-- Seed banner -->
-    <div id="seedBanner" class="seed-banner hidden">
-      <div class="seed-banner-content">
-        <strong>Database not seeded.</strong>
-        <span id="seedMsg">Load the 44K outfit embeddings from CSV to enable recommendations.</span>
-        <button class="btn btn-primary" id="seedBtn">Seed Database</button>
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="#" data-page="home">Outfit<span class="brand-accent">AI</span></a>
+      <div class="nav-links">
+        <a href="#" data-page="home" class="nav-link active">Home</a>
+        <a href="#" data-page="about" class="nav-link">About</a>
       </div>
-      <div id="seedProgress" class="seed-progress hidden">
-        <span class="spinner" style="border-color:#fff;border-top-color:transparent"></span>
-        <span id="seedStatusText">Seeding database…</span>
+    </div>
+  </nav>
+
+  <!-- Page: Home -->
+  <main id="page-home" class="page active">
+    <!-- Seed banner -->
+    <div class="container">
+      <div id="seedBanner" class="seed-banner hidden">
+        <div class="seed-banner-content">
+          <strong>Database not seeded.</strong>
+          <span id="seedMsg">Load the 44K outfit embeddings from CSV to enable recommendations.</span>
+          <button class="btn btn-primary" id="seedBtn">Seed Database</button>
+        </div>
+        <div id="seedProgress" class="seed-progress hidden">
+          <span class="spinner"></span>
+          <span id="seedStatusText">Seeding database…</span>
+        </div>
       </div>
     </div>
 
-    <!-- Upload -->
-    <section class="upload-section">
-      <h2>Find similar outfits</h2>
-      <p>Upload a photo of an outfit to discover visually similar items.</p>
+    <div class="container home-layout">
+      <!-- Left: Query panel -->
+      <aside class="query-panel">
+        <div class="query-card">
+          <h2 class="query-title">Query Image</h2>
+          <p class="query-sub">Upload a photo to find visually similar outfits.</p>
 
-      <div class="top-k-row">
-        <label for="topKSlider">Number of recommendations:</label>
-        <input type="range" id="topKSlider" min="1" max="20" value="5">
-        <span id="topKValue">5</span>
-      </div>
+          <div class="top-k-row">
+            <label for="topKSlider">Results: <span id="topKValue">5</span></label>
+            <input type="range" id="topKSlider" min="1" max="20" value="5">
+          </div>
 
-      <div class="drop-zone" id="dropZone">
-        <div class="icon">📷</div>
-        <p>Drag & drop an image here, or click to browse</p>
-      </div>
-      <input type="file" id="fileInput" accept="image/*" hidden>
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4361ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            </div>
+            <p>Drag & drop an image, or <span class="link">browse</span></p>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" hidden>
 
-      <div class="preview-container" id="previewContainer">
-        <img id="previewImage" alt="Uploaded image">
-      </div>
+          <div class="preview-container" id="previewContainer">
+            <img id="previewImage" alt="Uploaded image">
+            <button class="btn btn-primary btn-full" id="recommendBtn" disabled>
+              Get Recommendations
+            </button>
+          </div>
+        </div>
+      </aside>
 
-      <button class="btn btn-primary" id="recommendBtn" disabled>
-        Get Recommendations
-      </button>
-    </section>
+      <!-- Right: Results -->
+      <section class="results-panel">
+        <div id="resultsPlaceholder">
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <p>Upload an image to see recommendations</p>
+          </div>
+        </div>
 
-    <!-- Results -->
-    <section class="results-section" id="resultsSection">
-      <h2>Results</h2>
-      <div id="resultsContainer">
-        <div class="empty-state">
-          <div class="icon">🔍</div>
-          <p>Upload an image to see recommendations</p>
+        <div id="resultsContent" class="hidden">
+          <div class="results-header">
+            <h2>Recommendations</h2>
+            <div class="results-stats" id="resultsStats"></div>
+          </div>
+
+          <div class="results-toolbar">
+            <button class="toolbar-btn" id="favToggleBtn" onclick="toggleFavView()" title="Show only favorites">♡ Favorites</button>
+            <button class="toolbar-btn" onclick="document.getElementById('filterBody').classList.toggle('open')">▼ Filters</button>
+          </div>
+
+          <div class="result-grid" id="resultGrid"></div>
+
+          <div class="compare-bar" id="compareBar">
+            <span class="compare-bar-count">0 selected</span>
+            <button class="btn btn-primary compare-btn" disabled onclick="openCompareModal()">Compare</button>
+          </div>
+        </div>
+
+        <div id="loadingOverlay" class="hidden">
+          <div class="loading-content">
+            <div class="spinner lg"></div>
+            <p>Finding similar outfits…</p>
+            <p class="loading-sub">Searching across <span id="loadingCount">—</span> outfits</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Page: About -->
+  <main id="page-about" class="page">
+    <div class="container about-content">
+      <h1>About OutfitAI</h1>
+      <p class="about-lead">An AI-powered visual similarity search engine for fashion.</p>
+
+      <div class="about-grid">
+        <div class="about-card">
+          <h3>How it works</h3>
+          <p>Upload an outfit photo. EfficientNetB3 extracts a feature vector, which is compared against 44K+ embeddings using pgvector cosine similarity. Results are ranked by visual similarity.</p>
+        </div>
+        <div class="about-card">
+          <h3>Architecture</h3>
+          <p>Three services: <strong>Feature Extraction</strong> (Team A), <strong>Similarity Search</strong> (Team B), and <strong>Image Repository</strong> (Team C). PostgreSQL + pgvector for scalable vector search.</p>
+        </div>
+        <div class="about-card">
+          <h3>Tech Stack</h3>
+          <p>FastAPI · EfficientNetB3 · PostgreSQL · pgvector · TensorFlow · Docker</p>
         </div>
       </div>
-    </section>
-  </div>
+    </div>
+  </main>
+
+  <!-- Toast container -->
+  <div id="toastContainer" class="toast-container"></div>
 
   <script src="/js/app.js"></script>
   <script>
-    // ── Check seed status ──────────────────────────────────────────
+    // ── Elements ──────────────────────────────────────────────────
     const seedBanner = document.getElementById("seedBanner");
     const seedBtn = document.getElementById("seedBtn");
     const seedMsg = document.getElementById("seedMsg");
     const seedProgress = document.getElementById("seedProgress");
     const seedStatusText = document.getElementById("seedStatusText");
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const previewContainer = document.getElementById("previewContainer");
+    const previewImage = document.getElementById("previewImage");
+    const recommendBtn = document.getElementById("recommendBtn");
+    const resultsPlaceholder = document.getElementById("resultsPlaceholder");
+    const resultsContent = document.getElementById("resultsContent");
+    const resultGrid = document.getElementById("resultGrid");
+    const resultsStats = document.getElementById("resultsStats");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingCount = document.getElementById("loadingCount");
+    const totalCount = document.getElementById("totalCount");
+    const toastContainer = document.getElementById("toastContainer");
+    const topKSlider = document.getElementById("topKSlider");
+    const topKValue = document.getElementById("topKValue");
 
+    let selectedFile = null;
+    let totalImages = 0;
+    let queryDataUrl = null;
+
+    // ── Navigation ────────────────────────────────────────────────
+    document.querySelectorAll("[data-page]").forEach(el => {
+      el.addEventListener("click", e => {
+        e.preventDefault();
+        const page = el.dataset.page;
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById("page-" + page).classList.add("active");
+        document.querySelectorAll("[data-page]").forEach(a => a.classList.remove("active"));
+        document.querySelectorAll(`[data-page="${page}"]`).forEach(a => a.classList.add("active"));
+      });
+    });
+
+    // ── Toast ─────────────────────────────────────────────────────
+    function showToast(message, type = "error") {
+      const toast = document.createElement("div");
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      toastContainer.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add("show"));
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    function handleImgError(img, filename) {
+      img.style.display = "none";
+      const span = document.createElement("span");
+      span.style.cssText = "color:#adb5bd;font-size:0.75rem";
+      span.textContent = filename;
+      img.parentElement.appendChild(span);
+    }
+
+    // ── Check seed status ─────────────────────────────────────────
     async function checkSeed() {
       try {
         const res = await fetch(API_BASE_URL + "/api/seed/status");
         const data = await res.json();
-        if (!data.seeded) {
-          seedBanner.classList.remove("hidden");
-        }
-      } catch {}
+        totalImages = data.count || 0;
+        if (!data.seeded) seedBanner.classList.remove("hidden");
+        // update total count in stats when available
+      } catch { /* ignore */ }
     }
     checkSeed();
 
@@ -90,20 +209,16 @@
       seedStatusText.textContent = "Seeding database… (may take a minute)";
 
       try {
-        const res = await fetch(API_BASE_URL + "/api/seed", {
-          method: "POST",
-        });
+        const res = await fetch(API_BASE_URL + "/api/seed", { method: "POST" });
         const data = await res.json();
         if (res.ok) {
-          seedStatusText.textContent = `✅ ${data.message}`;
-          setTimeout(() => {
-            seedBanner.classList.add("hidden");
-          }, 2000);
+          seedStatusText.textContent = `Seeded successfully.`;
+          setTimeout(() => seedBanner.classList.add("hidden"), 2000);
         } else {
-          seedStatusText.textContent = `❌ ${data.detail || "Failed"}`;
+          seedStatusText.textContent = `Failed: ${data.detail || "Error"}`;
         }
       } catch (err) {
-        seedStatusText.textContent = `❌ ${err.message}`;
+        seedStatusText.textContent = `Error: ${err.message}`;
       } finally {
         seedBtn.disabled = false;
         seedProgress.classList.add("hidden");
@@ -111,36 +226,24 @@
       }
     });
 
-    // ── Top-K slider ────────────────────────────────────────────────
-    const topKSlider = document.getElementById("topKSlider");
-    const topKValue = document.getElementById("topKValue");
+    // ── Top-K slider ─────────────────────────────────────────────
     topKSlider.addEventListener("input", () => {
       topKValue.textContent = topKSlider.value;
     });
 
-    // ── Drag & drop / file picker ───────────────────────────────────
-    const dropZone = document.getElementById("dropZone");
-    const fileInput = document.getElementById("fileInput");
-    const previewContainer = document.getElementById("previewContainer");
-    const previewImage = document.getElementById("previewImage");
-    const recommendBtn = document.getElementById("recommendBtn");
-    const resultsContainer = document.getElementById("resultsContainer");
-
-    let selectedFile = null;
-
+    // ── Drag & drop / file picker ─────────────────────────────────
     dropZone.addEventListener("click", () => fileInput.click());
 
-    dropZone.addEventListener("dragover", (e) => {
+    dropZone.addEventListener("dragover", e => {
       e.preventDefault();
       dropZone.classList.add("dragover");
     });
     dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
 
-    dropZone.addEventListener("drop", (e) => {
+    dropZone.addEventListener("drop", e => {
       e.preventDefault();
       dropZone.classList.remove("dragover");
-      const files = e.dataTransfer.files;
-      if (files.length) handleFile(files[0]);
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
     });
 
     fileInput.addEventListener("change", () => {
@@ -149,13 +252,14 @@
 
     function handleFile(file) {
       if (!file.type.startsWith("image/")) {
-        alert("Please select an image file.");
+        showToast("Please select an image file.");
         return;
       }
       selectedFile = file;
       const reader = new FileReader();
-      reader.onload = (e) => {
-        previewImage.src = e.target.result;
+      reader.onload = e => {
+        queryDataUrl = e.target.result;
+        previewImage.src = queryDataUrl;
         previewContainer.style.display = "block";
         dropZone.classList.add("has-image");
         recommendBtn.disabled = false;
@@ -163,30 +267,34 @@
       reader.readAsDataURL(file);
     }
 
-    // ── Recommend ───────────────────────────────────────────────────
+    // ── Recommend ─────────────────────────────────────────────────
     recommendBtn.addEventListener("click", async () => {
       if (!selectedFile) return;
 
       const topK = parseInt(topKSlider.value, 10);
       recommendBtn.disabled = true;
-      recommendBtn.innerHTML = '<span class="spinner"></span> Analysing…';
-      resultsContainer.innerHTML =
-        '<div class="empty-state"><div class="spinner" style="border-color:#4361ee;border-top-color:transparent;width:2rem;height:2rem;margin:0 auto .5rem"></div><p>Finding similar outfits…</p></div>';
+      recommendBtn.textContent = "Analysing…";
+
+      resultsPlaceholder.classList.add("hidden");
+      resultsContent.classList.add("hidden");
+      loadingOverlay.classList.remove("hidden");
+      loadingCount.textContent = totalImages ? totalImages.toLocaleString() : "44,441";
+
+      const startTime = performance.now();
 
       try {
         const formData = new FormData();
         formData.append("file", selectedFile);
 
         const url = API_BASE_URL + `/api/recommend?top_k=${topK}`;
-        const res = await fetch(url, {
-          method: "POST",
-          body: formData,
-        });
+        const res = await fetch(url, { method: "POST", body: formData });
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
 
         if (res.status === 404) {
-          resultsContainer.innerHTML = `
+          loadingOverlay.classList.add("hidden");
+          resultsPlaceholder.classList.remove("hidden");
+          resultsPlaceholder.innerHTML = `
             <div class="empty-state">
-              <div class="icon">📂</div>
               <p>No embeddings in database. Seed the data first.</p>
             </div>`;
           return;
@@ -195,54 +303,425 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Request failed");
 
-        renderResults(data.recommendations);
+        renderResults(data.recommendations, elapsed);
       } catch (err) {
-        resultsContainer.innerHTML = `
-          <div class="alert alert-error">${err.message}</div>
-        `;
+        loadingOverlay.classList.add("hidden");
+        resultsPlaceholder.classList.remove("hidden");
+        showToast(err.message);
       } finally {
         recommendBtn.disabled = false;
         recommendBtn.textContent = "Get Recommendations";
       }
     });
 
-    function renderResults(recommendations) {
+    // ── Global state ───────────────────────────────────────────
+    let _lastRecs = [];
+    let _filteredRecs = [];
+    let _favorites = new Set(JSON.parse(localStorage.getItem("favs") || "[]"));
+    let _compareSet = new Set();
+    let _showFavsOnly = false;
+    let _activeFilters = { brands:[], colours:[], categories:[], genders:[], minPrice:null, maxPrice:null };
+
+    // ── Render results ─────────────────────────────────────────
+    function renderResults(recommendations, elapsed) {
+      loadingOverlay.classList.add("hidden");
+
       if (!recommendations || recommendations.length === 0) {
-        resultsContainer.innerHTML = `
+        resultsPlaceholder.classList.remove("hidden");
+        resultsPlaceholder.innerHTML = `
           <div class="empty-state">
-            <div class="icon">😕</div>
             <p>No similar outfits found.</p>
           </div>`;
         return;
       }
 
-      const grid = document.createElement("div");
-      grid.className = "result-grid";
+      _lastRecs = recommendations;
+      _showFavsOnly = false;
+      _compareSet.clear();
 
-      for (const rec of recommendations) {
+      resultsStats.innerHTML = `
+        <span class="stat"><strong>${totalImages.toLocaleString()}</strong> searched</span>
+        <span class="stat-divider">·</span>
+        <span class="stat"><strong>${recommendations.length}</strong> results</span>
+        <span class="stat-divider">·</span>
+        <span class="stat"><strong>${elapsed}s</strong></span>
+      `;
+
+      buildFilters(recommendations);
+      applyFilters();
+      updateCompareBar();
+      resultsContent.classList.remove("hidden");
+    }
+
+    // ── Build filter UI ────────────────────────────────────────
+    function buildFilters(recs) {
+      const brands = new Set();
+      const colours = new Set();
+      const cats = new Set();
+      const genders = new Set();
+      recs.forEach(r => {
+        if (r.brand_name) brands.add(r.brand_name);
+        if (r.base_colour) colours.add(r.base_colour);
+        if (r.master_category) cats.add(r.master_category);
+        if (r.gender) genders.add(r.gender);
+      });
+
+      function chipGroup(label, items, key) {
+        if (!items.size) return "";
+        const chips = Array.from(items).sort().map(v =>
+          `<span class="filter-chip" data-filter="${key}" data-value="${v}" onclick="toggleFilter(this)">${v}</span>`
+        ).join("");
+        return `<div class="filter-group"><div class="filter-group-label">${label}</div><div class="filter-chips">${chips}</div></div>`;
+      }
+
+      const html = `
+        <div class="filter-bar" id="filterBar">
+          <button class="filter-toggle" onclick="document.getElementById('filterBody').classList.toggle('open')">
+            ▼ Filters <span id="filterCount" style="font-weight:400;color:#6c757d"></span>
+            <span class="filter-clear" onclick="event.stopPropagation();clearFilters()" style="display:none" id="clearFiltersBtn">Clear</span>
+          </button>
+          <div class="filter-body" id="filterBody">
+            ${chipGroup("Brand", brands, "brand")}
+            ${chipGroup("Colour", colours, "colour")}
+            ${chipGroup("Category", cats, "category")}
+            ${chipGroup("Gender", genders, "gender")}
+            <div class="filter-group">
+              <div class="filter-group-label">Price Range</div>
+              <div class="filter-price-row">
+                <span>₹</span><input type="number" id="filterPriceMin" placeholder="Min" min="0" oninput="applyFilters()">
+                <span>—</span>
+                <span>₹</span><input type="number" id="filterPriceMax" placeholder="Max" min="0" oninput="applyFilters()">
+              </div>
+            </div>
+          </div>
+        </div>`;
+
+      const existing = document.getElementById("filterBar");
+      if (existing) existing.outerHTML = html;
+      else resultGrid.insertAdjacentHTML("beforebegin", html);
+    }
+
+    function toggleFilter(el) {
+      el.classList.toggle("active");
+      applyFilters();
+    }
+
+    function clearFilters() {
+      document.querySelectorAll(".filter-chip.active").forEach(c => c.classList.remove("active"));
+      document.getElementById("filterPriceMin").value = "";
+      document.getElementById("filterPriceMax").value = "";
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const activeBrands = new Set(Array.from(document.querySelectorAll(".filter-chip[data-filter='brand'].active")).map(c => c.dataset.value));
+      const activeColours = new Set(Array.from(document.querySelectorAll(".filter-chip[data-filter='colour'].active")).map(c => c.dataset.value));
+      const activeCats = new Set(Array.from(document.querySelectorAll(".filter-chip[data-filter='category'].active")).map(c => c.dataset.value));
+      const activeGenders = new Set(Array.from(document.querySelectorAll(".filter-chip[data-filter='gender'].active")).map(c => c.dataset.value));
+      const minP = parseFloat(document.getElementById("filterPriceMin")?.value) || null;
+      const maxP = parseFloat(document.getElementById("filterPriceMax")?.value) || null;
+
+      _filteredRecs = _lastRecs.filter(r => {
+        if (activeBrands.size && !activeBrands.has(r.brand_name)) return false;
+        if (activeColours.size && !activeColours.has(r.base_colour)) return false;
+        if (activeCats.size && !activeCats.has(r.master_category)) return false;
+        if (activeGenders.size && !activeGenders.has(r.gender)) return false;
+        if (minP != null && (r.discounted_price == null || r.discounted_price < minP)) return false;
+        if (maxP != null && (r.discounted_price == null || r.discounted_price > maxP)) return false;
+        return true;
+      });
+
+      if (_showFavsOnly) {
+        _filteredRecs = _filteredRecs.filter(r => _favorites.has(r.image_path));
+      }
+
+      const count = _filteredRecs.length;
+      const total = _lastRecs.length;
+      document.getElementById("filterCount").textContent = count < total ? `(${count} of ${total})` : "";
+      document.getElementById("clearFiltersBtn").style.display = count < total ? "inline" : "none";
+
+      renderCards(_filteredRecs);
+    }
+
+    // ── Render card grid ────────────────────────────────────────
+    function renderCards(recs) {
+      resultGrid.innerHTML = "";
+
+      for (const rec of recs) {
         const filename = rec.image_path.split("/").pop();
         const score = (rec.similarity_score * 100).toFixed(1);
         const barWidth = Math.max(4, rec.similarity_score * 100);
+        const isFav = _favorites.has(rec.image_path);
+        const isComp = _compareSet.has(rec.image_path);
+
+        const attrs = rec.article_attributes || {};
+        const attrParts = [];
+        if (attrs.fabric) attrParts.push(attrs.fabric);
+        if (attrs.sleeve_length) attrParts.push(attrs.sleeve_length);
+        if (attrs.neck) attrParts.push(attrs.neck);
 
         const card = document.createElement("div");
         card.className = "result-card";
+
         card.innerHTML = `
-          <div class="img-placeholder">
-            <img src="${API_BASE_URL}${rec.image_path}" alt="${filename}" onerror="this.parentElement.innerHTML='<span>${filename}</span>'">
+          <div class="card-img-wrap" style="background-image: url(${API_BASE_URL}${rec.image_path})">
+            <button class="card-fav ${isFav ? "active" : ""}" data-path="${rec.image_path}"
+              onclick="event.stopPropagation();toggleFavorite(this, this.dataset.path)">${isFav ? "♥" : "♡"}</button>
+            <input type="checkbox" class="card-compare-check" data-path="${rec.image_path}"
+              onchange="event.stopPropagation();toggleCompare(this, this.dataset.path)" ${isComp ? "checked" : ""}>
+            <button class="card-find-btn" data-path="${rec.image_path}"
+              onclick="event.stopPropagation();findSimilar(this.dataset.path)">🔍 Find Similar</button>
           </div>
-          <div class="info">
-            <div class="filename" title="${rec.image_path}">${filename}</div>
-            <div class="score-bar-bg">
-              <div class="score-bar-fill" style="width:${barWidth}%"></div>
+          <div class="card-body" data-img-path="${rec.image_path}" style="cursor:pointer">
+            ${rec.product_display_name ? `<div class="card-title" title="${rec.product_display_name}">${rec.product_display_name}</div>` : `<div class="card-title">${filename}</div>`}
+            ${rec.brand_name ? `<div class="card-brand">${rec.brand_name}</div>` : ''}
+            <div class="card-price-row">
+              ${rec.discounted_price ? `<span class="card-price">₹${Number(rec.discounted_price).toLocaleString()}</span>` : ''}
+              ${rec.price && rec.discounted_price && rec.price !== rec.discounted_price ? `<span class="card-price-original">₹${Number(rec.price).toLocaleString()}</span>` : ''}
+              ${rec.rating ? `<span class="card-rating">★ ${rec.rating}</span>` : ''}
             </div>
-            <div class="score">${score}% match</div>
+            <div class="card-details">
+              ${rec.gender ? `<span class="card-tag">${rec.gender}</span>` : ''}
+              ${rec.usage ? `<span class="card-tag">${rec.usage}</span>` : ''}
+              ${rec.base_colour ? `<span class="card-tag">${rec.base_colour}</span>` : ''}
+              ${rec.season ? `<span class="card-tag">${rec.season}</span>` : ''}
+            </div>
+            ${attrParts.length ? `<div class="card-attr">${attrParts.join(' · ')}</div>` : ''}
+            <div class="card-score-wrap">
+              <div class="card-score-bar" style="width:${barWidth}%"></div>
+            </div>
+            <div class="card-score">${score}% match</div>
           </div>
         `;
-        grid.appendChild(card);
+
+        resultGrid.appendChild(card);
+        card.querySelector(".card-body").addEventListener("click", (e) => {
+          openDetailModal(rec, API_BASE_URL);
+        });
+      }
+    }
+
+    // ── Favorites ──────────────────────────────────────────────
+    function toggleFavorite(btn, path) {
+      if (_favorites.has(path)) {
+        _favorites.delete(path);
+        btn.textContent = "♡";
+        btn.classList.remove("active");
+      } else {
+        _favorites.add(path);
+        btn.textContent = "♥";
+        btn.classList.add("active");
+      }
+      localStorage.setItem("favs", JSON.stringify(Array.from(_favorites)));
+      document.getElementById("favToggleBtn")?.classList.toggle("active", _favorites.size > 0);
+      if (_showFavsOnly) applyFilters();
+    }
+
+    function toggleFavView() {
+      _showFavsOnly = !_showFavsOnly;
+      document.getElementById("favToggleBtn").classList.toggle("active", _showFavsOnly);
+      applyFilters();
+    }
+
+    // ── Compare ────────────────────────────────────────────────
+    function toggleCompare(cb, path) {
+      if (cb.checked) _compareSet.add(path);
+      else _compareSet.delete(path);
+      updateCompareBar();
+    }
+
+    function updateCompareBar() {
+      const bar = document.getElementById("compareBar");
+      if (!bar) return;
+      const count = _compareSet.size;
+      bar.classList.toggle("visible", count >= 2);
+      bar.querySelector(".compare-bar-count").textContent = `${count} selected`;
+      bar.querySelector(".compare-btn").disabled = count < 2;
+    }
+
+    function openCompareModal() {
+      const items = _lastRecs.filter(r => _compareSet.has(r.image_path));
+      if (items.length < 2) return;
+
+      const cols = Math.min(items.length, 4);
+      const colHtml = items.map(rec => {
+        const filename = rec.image_path.split("/").pop();
+        function row(l, v) { return v != null && v !== "" ? `<tr><td class="label">${l}</td><td class="value">${v}</td></tr>` : ""; }
+        function section(l) { return `<tr class="section-label"><td colspan="2">${l}</td></tr>`; }
+        const attrs = rec.article_attributes || {};
+        const attrRows = Object.keys(attrs).map(k => row(k.replace(/_/g," "), attrs[k])).join("");
+        return `<div class="compare-col">
+          <div class="modal-img-wrap">
+            <img src="${API_BASE_URL}${rec.image_path}" alt="${filename}">
+          </div>
+          <div class="modal-head" style="margin-bottom:0.25rem">
+            <div class="modal-title" style="font-size:0.85rem">${rec.product_display_name || filename}</div>
+          </div>
+          <table class="modal-table">
+            ${section("Details")}
+            ${row("Similarity", (rec.similarity_score*100).toFixed(1)+"%")}
+            ${row("Brand", rec.brand_name)}
+            ${row("Price", rec.discounted_price ? "₹"+Number(rec.discounted_price).toLocaleString() : null)}
+            ${row("Gender", rec.gender)}
+            ${row("Category", rec.master_category)}
+            ${row("Type", rec.article_type)}
+            ${row("Colour", rec.base_colour)}
+            ${row("Season", rec.season)}
+            ${row("Usage", rec.usage)}
+            ${row("Rating", rec.rating ? "★ "+rec.rating : null)}
+            ${attrRows ? section("Attributes") : ""}
+            ${attrRows}
+          </table>
+        </div>`;
+      }).join("");
+
+      const html = `
+        <div class="modal-overlay open compare-modal" id="compareModal" onclick="closeCompareModal()">
+          <div class="modal" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeCompareModal()">✕</button>
+            <div class="modal-info">
+              <div class="modal-head" style="margin-bottom:0.75rem">
+                <div class="modal-title">Compare Items</div>
+              </div>
+              <div class="compare-grid cols-${cols}">${colHtml}</div>
+            </div>
+          </div>
+        </div>`;
+
+      const existing = document.getElementById("compareModal");
+      if (existing) existing.remove();
+      document.body.insertAdjacentHTML("beforeend", html);
+    }
+
+    function closeCompareModal() {
+      const el = document.getElementById("compareModal");
+      if (el) el.remove();
+    }
+
+    // ── Find Similar ────────────────────────────────────────────
+    async function findSimilar(imagePath) {
+      const url = `${API_BASE_URL}${imagePath}`;
+      try {
+        const resp = await fetch(url + "?t=" + Date.now());
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const blob = await resp.blob();
+        const file = new File([blob], imagePath.split("/").pop(), { type: blob.type || "image/jpeg" });
+
+        recommendBtn.disabled = true;
+        recommendBtn.textContent = "Finding similar…";
+        resultsPlaceholder.classList.add("hidden");
+        resultsContent.classList.add("hidden");
+        loadingOverlay.classList.remove("hidden");
+        loadingCount.textContent = totalImages ? totalImages.toLocaleString() : "44,441";
+
+        const formData = new FormData();
+        formData.append("file", file);
+        const topK = parseInt(topKSlider.value, 10);
+        const startTime = performance.now();
+        const res = await fetch(`${API_BASE_URL}/api/recommend?top_k=${topK}`, { method: "POST", body: formData });
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+
+        if (res.status === 404) {
+          loadingOverlay.classList.add("hidden");
+          resultsPlaceholder.classList.remove("hidden");
+          resultsPlaceholder.innerHTML = `<div class="empty-state"><p>No embeddings in database.</p></div>`;
+          return;
+        }
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Request failed");
+        renderResults(data.recommendations, elapsed);
+      } catch (err) {
+        loadingOverlay.classList.add("hidden");
+        resultsPlaceholder.classList.remove("hidden");
+        showToast(err.message);
+      } finally {
+        recommendBtn.disabled = false;
+        recommendBtn.textContent = "Get Recommendations";
+      }
+    }
+
+    // ── Detail Modal ──────────────────────────────────────────
+    function openDetailModal(rec, baseUrl) {
+      const filename = rec.image_path.split("/").pop();
+      const score = (rec.similarity_score * 100).toFixed(1);
+
+      function fmt(val, prefix) {
+        if (val == null || val === "") return null;
+        return (prefix || "") + val;
       }
 
-      resultsContainer.innerHTML = "";
-      resultsContainer.appendChild(grid);
+      function row(label, val) {
+        if (val == null || val === "") return "";
+        return `<tr><td class="label">${label}</td><td class="value">${val}</td></tr>`;
+      }
+
+      function section(label) {
+        return `<tr class="section-label"><td colspan="2">${label}</td></tr>`;
+      }
+
+      const attrs = rec.article_attributes || {};
+      const attrRows = Object.keys(attrs).map(k =>
+        row(k.replace(/_/g, " "), attrs[k])
+      ).join("");
+
+      const modalHtml = `
+        <div class="modal-overlay open" id="detailModal">
+          <div class="modal" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeDetailModal()">✕</button>
+
+            <div class="modal-img-wrap">
+              <img src="${baseUrl}${rec.image_path}" alt="${filename}">
+            </div>
+
+            <div class="modal-info">
+              <div class="modal-head">
+                <div>
+                  <div class="modal-title">${rec.product_display_name || filename}</div>
+                  ${rec.brand_name ? `<div class="modal-brand">${rec.brand_name}</div>` : ""}
+                </div>
+                <span class="modal-score">${score}% match</span>
+              </div>
+
+              <div class="modal-meta-row">
+                ${rec.discounted_price ? `<span class="modal-price">₹${Number(rec.discounted_price).toLocaleString()}</span>` : ""}
+                ${rec.price && rec.discounted_price && rec.price !== rec.discounted_price ? `<span class="modal-price-original">₹${Number(rec.price).toLocaleString()}</span>` : ""}
+                ${rec.rating ? `<span class="modal-rating">★ ${rec.rating}</span>` : ""}
+              </div>
+
+              <table class="modal-table">
+                ${section("Details")}
+                ${row("Image", filename)}
+                ${row("Similarity", `${score}%`)}
+                ${row("Gender", rec.gender)}
+                ${row("Category", rec.master_category)}
+                ${row("Sub Category", rec.sub_category)}
+                ${row("Article Type", rec.article_type)}
+                ${row("Colour", rec.base_colour)}
+                ${row("Season", rec.season)}
+                ${row("Year", rec.year)}
+                ${row("Usage", rec.usage)}
+                ${row("Brand", rec.brand_name)}
+                ${row("Price", rec.price ? `₹${Number(rec.price).toLocaleString()}` : null)}
+                ${row("Discounted Price", rec.discounted_price ? `₹${Number(rec.discounted_price).toLocaleString()}` : null)}
+                ${row("Rating", rec.rating ? `★ ${rec.rating} / 5` : null)}
+                ${attrRows ? section("Attributes") : ""}
+                ${attrRows}
+              </table>
+            </div>
+          </div>
+        </div>`;
+
+      const existing = document.getElementById("detailModal");
+      if (existing) existing.remove();
+
+      document.body.insertAdjacentHTML("beforeend", modalHtml);
+      document.getElementById("detailModal").addEventListener("click", closeDetailModal);
+    }
+
+    function closeDetailModal() {
+      const el = document.getElementById("detailModal");
+      if (el) el.remove();
     }
   </script>
 </body>
