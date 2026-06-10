@@ -1,6 +1,5 @@
 """EfficientNetB3 model — load once, extract embeddings from image bytes.
 
-Responsibility of **Team A**.
 """
 import io
 import logging
