@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     MODEL_INPUT_SIZE: int = 300
     EMBEDDING_DIM: int = 1536
     TOP_K_RECOMMENDATIONS: int = 5
+    SESSION_SECRET_KEY: str = "outfit-ai-session-secret-change-in-production"
+    SESSION_MAX_AGE: int = 604800  # 7 days in seconds
 
     class Config:
         env_file = ".env"

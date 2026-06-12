@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - PixelCloset</title>
+  <link rel="stylesheet" href="/css/style.css?v=2">
+</head>
+<body class="auth-body">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">Pixel<span>Closet</span></div>
+        <h1>Create an account</h1>
+        <p class="auth-sub">Get started with PixelCloset</p>
+      </div>
+
+      <form id="signupForm" class="auth-form">
+        <div class="form-group">
+          <label for="signupUsername">Username</label>
+          <input type="text" id="signupUsername" placeholder="Choose a username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="signupEmail">Email address</label>
+          <input type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="signupPassword">Password</label>
+          <input type="password" id="signupPassword" placeholder="At least 6 characters" required autocomplete="new-password" minlength="6">
+        </div>
+        <div class="form-group">
+          <label for="signupConfirm">Confirm password</label>
+          <input type="password" id="signupConfirm" placeholder="Repeat your password" required autocomplete="new-password">
+        </div>
+        <div id="signupError" class="form-error hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="signupBtn">Create Account</button>
+      </form>
+
+      <p class="auth-footer-text">
+        Already have an account? <a href="/">Sign in</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/js/app.js?v=2"></script>
+  <script>
+    const toastContainer = document.createElement("div");
+    toastContainer.className = "toast-container";
+    document.body.appendChild(toastContainer);
+
+    function showToast(message, type = "error") {
+      const toast = document.createElement("div");
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      toastContainer.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add("show"));
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    fetch(API_BASE_URL + "/api/auth/me", { credentials: "include" })
+      .then(res => { if (res.ok) window.location.href = "/dashboard.html"; })
+      .catch(() => {});
+
+    const signupForm = document.getElementById("signupForm");
+    const signupUsername = document.getElementById("signupUsername");
+    const signupEmail = document.getElementById("signupEmail");
+    const signupPassword = document.getElementById("signupPassword");
+    const signupConfirm = document.getElementById("signupConfirm");
+    const signupError = document.getElementById("signupError");
+    const signupBtn = document.getElementById("signupBtn");
+
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      signupError.classList.add("hidden");
+      signupBtn.disabled = true;
+      signupBtn.textContent = "Creating account\u2026";
+
+      if (signupPassword.value !== signupConfirm.value) {
+        signupError.textContent = "Passwords do not match";
+        signupError.classList.remove("hidden");
+        signupBtn.disabled = false;
+        signupBtn.textContent = "Create Account";
+        return;
+      }
+
+      try {
+        const res = await fetch(API_BASE_URL + "/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            username: signupUsername.value.trim(),
+            email: signupEmail.value.trim(),
+            password: signupPassword.value,
+            confirm_password: signupConfirm.value,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = data.detail
+            ? (Array.isArray(data.detail) ? data.detail[0].msg : data.detail)
+            : "Sign up failed";
+          signupError.textContent = msg;
+          signupError.classList.remove("hidden");
+          return;
+        }
+
+        window.location.href = "/dashboard.html";
+      } catch (err) {
+        signupError.textContent = "Unable to connect. Make sure the server is running.";
+        signupError.classList.remove("hidden");
+      } finally {
+        signupBtn.disabled = false;
+        signupBtn.textContent = "Create Account";
+      }
+    });
+  </script>
+</body>
+</html>
