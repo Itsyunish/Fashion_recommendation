@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Outfit Recommender</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <title>PixelCloset</title>
+  <link rel="stylesheet" href="/css/style.css?v=2">
 </head>
 <body>
   <!-- Nav -->
   <nav class="nav">
     <div class="nav-inner">
-      <a class="nav-brand" href="#" data-page="home">Outfit<span class="brand-accent">AI</span></a>
+      <a class="nav-brand" href="#" data-page="home">Pixel<span class="brand-accent">Closet</span></a>
       <div class="nav-links">
         <a href="#" data-page="home" class="nav-link active">Home</a>
         <a href="#" data-page="about" class="nav-link">About</a>
+        <a href="#" data-page="settings" class="nav-link">Settings</a>
+        <button class="nav-link" id="logoutBtn" style="border:none;cursor:pointer">Logout</button>
       </div>
     </div>
   </nav>
@@ -49,7 +51,7 @@
 
           <div class="drop-zone" id="dropZone">
             <div class="drop-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4361ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--primary)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
             </div>
             <p>Drag & drop an image, or <span class="link">browse</span></p>
           </div>
@@ -106,7 +108,7 @@
   <!-- Page: About -->
   <main id="page-about" class="page">
     <div class="container about-content">
-      <h1>About OutfitAI</h1>
+      <h1>About PixelCloset</h1>
       <p class="about-lead">An AI-powered visual similarity search engine for fashion.</p>
 
       <div class="about-grid">
@@ -126,10 +128,113 @@
     </div>
   </main>
 
+  <!-- Page: Settings -->
+  <main id="page-settings" class="page">
+    <div class="container settings-page">
+      <div class="settings-header">
+        <h1>Settings</h1>
+      </div>
+
+      <div class="settings-grid">
+        <!-- Profile -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <h2>Profile</h2>
+              <p>Update your username and email</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="field-row">
+              <label>Username</label>
+              <input type="text" id="settingsUsername" class="field-input">
+            </div>
+            <div class="field-row">
+              <label>Email</label>
+              <input type="email" id="settingsEmail" class="field-input">
+            </div>
+            <div id="profileError" class="form-error hidden"></div>
+            <button class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Security -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <h2>Security</h2>
+              <p>Change your password</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="field-row">
+              <label>Current Password</label>
+              <input type="password" id="settingsOldPass" class="field-input">
+            </div>
+            <div class="field-row">
+              <label>New Password</label>
+              <input type="password" id="settingsNewPass" class="field-input" minlength="6">
+            </div>
+            <div id="passwordError" class="form-error hidden"></div>
+            <button class="btn btn-primary" id="changePassBtn">Change Password</button>
+          </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <h2>Appearance</h2>
+              <p>Toggle dark mode</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="theme-row">
+              <span>Dark Mode</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="themeToggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <p class="field-hint">Automatically saved</p>
+          </div>
+        </div>
+
+        <!-- Favorites -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div>
+              <h2>Favorites</h2>
+              <p>Manage your saved items</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <p class="field-hint" style="margin-bottom:0.75rem">Clear all your favorited items. This action cannot be undone.</p>
+            <button class="btn" id="clearFavsBtn" style="background:var(--border);color:var(--text)">Clear All Favorites</button>
+          </div>
+        </div>
+
+        <!-- Account -->
+        <div class="settings-card settings-card-danger">
+          <div class="settings-card-header">
+            <div>
+              <h2>Delete Account</h2>
+              <p>Permanently remove your account and data</p>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <p class="field-hint" style="margin-bottom:0.75rem">Once deleted, your account cannot be recovered.</p>
+            <button class="btn" id="settingsDeleteBtn" style="background:var(--danger);color:#fff">Delete My Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
   <!-- Toast container -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <script src="/js/app.js"></script>
+  <script src="/js/app.js?v=2"></script>
   <script>
     // ── Elements ──────────────────────────────────────────────────
     const seedBanner = document.getElementById("seedBanner");
@@ -189,6 +294,138 @@
       span.textContent = filename;
       img.parentElement.appendChild(span);
     }
+
+    // ── Auth check ───────────────────────────────────────────────
+    let _currentUser = null;
+
+    async function checkAuth() {
+      try {
+        const res = await fetch(API_BASE_URL + "/api/auth/me", { credentials: "include" });
+        if (!res.ok) { window.location.href = "/"; return; }
+        _currentUser = await res.json();
+      } catch {
+        window.location.href = "/";
+      }
+    }
+    checkAuth();
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try {
+        await fetch(API_BASE_URL + "/api/auth/logout", { method: "POST", credentials: "include" });
+      } catch {}
+      window.location.href = "/";
+    });
+
+    // ── Settings ────────────────────────────────────────────────
+    // Populate settings fields when navigating to the settings page
+    document.querySelector('[data-page="settings"]').addEventListener("click", () => {
+      if (_currentUser) {
+        document.getElementById("settingsUsername").value = _currentUser.username;
+        document.getElementById("settingsEmail").value = _currentUser.email;
+      }
+      document.getElementById("settingsOldPass").value = "";
+      document.getElementById("settingsNewPass").value = "";
+      document.getElementById("profileError").classList.add("hidden");
+      document.getElementById("passwordError").classList.add("hidden");
+    });
+
+    // Save Profile
+    document.getElementById("saveProfileBtn").addEventListener("click", async () => {
+      const username = document.getElementById("settingsUsername").value.trim();
+      const email = document.getElementById("settingsEmail").value.trim();
+      const body = {};
+      if (username && username !== _currentUser.username) body.username = username;
+      if (email && email !== _currentUser.email) body.email = email;
+      if (!Object.keys(body).length) return;
+      document.getElementById("saveProfileBtn").disabled = true;
+      try {
+        const res = await fetch(API_BASE_URL + "/api/auth/me", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          document.getElementById("profileError").textContent = data.detail || "Failed";
+          document.getElementById("profileError").classList.remove("hidden");
+          return;
+        }
+        _currentUser = data.user;
+        showToast(data.message, "success");
+      } catch (err) {
+        document.getElementById("profileError").textContent = "Network error";
+        document.getElementById("profileError").classList.remove("hidden");
+      } finally {
+        document.getElementById("saveProfileBtn").disabled = false;
+      }
+    });
+
+    // Change Password
+    document.getElementById("changePassBtn").addEventListener("click", async () => {
+      const oldPass = document.getElementById("settingsOldPass").value;
+      const newPass = document.getElementById("settingsNewPass").value;
+      document.getElementById("passwordError").classList.add("hidden");
+      if (!oldPass || !newPass) { document.getElementById("passwordError").textContent = "Fill all fields"; document.getElementById("passwordError").classList.remove("hidden"); return; }
+      document.getElementById("changePassBtn").disabled = true;
+      try {
+        const res = await fetch(API_BASE_URL + "/api/auth/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ old_password: oldPass, new_password: newPass }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          document.getElementById("passwordError").textContent = data.detail || "Failed";
+          document.getElementById("passwordError").classList.remove("hidden");
+          return;
+        }
+        document.getElementById("settingsOldPass").value = "";
+        document.getElementById("settingsNewPass").value = "";
+        showToast(data.message, "success");
+      } catch (err) {
+        document.getElementById("passwordError").textContent = "Network error";
+        document.getElementById("passwordError").classList.remove("hidden");
+      } finally {
+        document.getElementById("changePassBtn").disabled = false;
+      }
+    });
+
+    // Theme Toggle
+    const themeToggle = document.getElementById("themeToggle");
+    themeToggle.addEventListener("change", () => {
+      document.documentElement.classList.toggle("dark", themeToggle.checked);
+      localStorage.setItem("theme", themeToggle.checked ? "dark" : "light");
+    });
+    if (localStorage.getItem("theme") === "dark") {
+      themeToggle.checked = true;
+      document.documentElement.classList.add("dark");
+    }
+
+    // Clear Favorites
+    document.getElementById("clearFavsBtn").addEventListener("click", () => {
+      if (!confirm("Clear all your favorites?")) return;
+      _favorites.clear();
+      localStorage.setItem("favs", "[]");
+      document.querySelectorAll(".card-fav.active").forEach(b => { b.textContent = "♡"; b.classList.remove("active"); });
+      document.getElementById("favToggleBtn")?.classList.remove("active");
+      showToast("Favorites cleared", "info");
+    });
+
+    // Delete Account (in settings)
+    document.getElementById("settingsDeleteBtn").addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to delete your account? This cannot be undone.")) return;
+      try {
+        const res = await fetch(API_BASE_URL + "/api/auth/me", {
+          method: "DELETE", credentials: "include",
+        });
+        if (res.ok) window.location.href = "/";
+        else { const d = await res.json(); showToast(d.detail || "Failed"); }
+      } catch (err) {
+        showToast("Network error: " + err.message);
+      }
+    });
 
     // ── Check seed status ─────────────────────────────────────────
     async function checkSeed() {
@@ -444,6 +681,8 @@
     }
 
     // ── Render card grid ────────────────────────────────────────
+    function _valid(v) { return v != null && v !== "" && !/^(na|n\/a|null|none|-)$/i.test(String(v).trim()); }
+
     function renderCards(recs) {
       resultGrid.innerHTML = "";
 
@@ -455,10 +694,9 @@
         const isComp = _compareSet.has(rec.image_path);
 
         const attrs = rec.article_attributes || {};
-        const attrParts = [];
-        if (attrs.fabric) attrParts.push(attrs.fabric);
-        if (attrs.sleeve_length) attrParts.push(attrs.sleeve_length);
-        if (attrs.neck) attrParts.push(attrs.neck);
+        const attrParts = ["fabric", "sleeve_length", "neck"]
+          .map(k => attrs[k])
+          .filter(_valid);
 
         const card = document.createElement("div");
         card.className = "result-card";
@@ -473,18 +711,18 @@
               onclick="event.stopPropagation();findSimilar(this.dataset.path)">🔍 Find Similar</button>
           </div>
           <div class="card-body" data-img-path="${rec.image_path}" style="cursor:pointer">
-            ${rec.product_display_name ? `<div class="card-title" title="${rec.product_display_name}">${rec.product_display_name}</div>` : `<div class="card-title">${filename}</div>`}
-            ${rec.brand_name ? `<div class="card-brand">${rec.brand_name}</div>` : ''}
+            ${_valid(rec.product_display_name) ? `<div class="card-title" title="${rec.product_display_name}">${rec.product_display_name}</div>` : `<div class="card-title">${filename}</div>`}
+            ${_valid(rec.brand_name) ? `<div class="card-brand">${rec.brand_name}</div>` : ''}
             <div class="card-price-row">
-              ${rec.discounted_price ? `<span class="card-price">₹${Number(rec.discounted_price).toLocaleString()}</span>` : ''}
+              ${_valid(rec.discounted_price) ? `<span class="card-price">₹${Number(rec.discounted_price).toLocaleString()}</span>` : ''}
               ${rec.price && rec.discounted_price && rec.price !== rec.discounted_price ? `<span class="card-price-original">₹${Number(rec.price).toLocaleString()}</span>` : ''}
-              ${rec.rating ? `<span class="card-rating">★ ${rec.rating}</span>` : ''}
+              ${_valid(rec.rating) ? `<span class="card-rating">★ ${rec.rating}</span>` : ''}
             </div>
             <div class="card-details">
-              ${rec.gender ? `<span class="card-tag">${rec.gender}</span>` : ''}
-              ${rec.usage ? `<span class="card-tag">${rec.usage}</span>` : ''}
-              ${rec.base_colour ? `<span class="card-tag">${rec.base_colour}</span>` : ''}
-              ${rec.season ? `<span class="card-tag">${rec.season}</span>` : ''}
+              ${_valid(rec.gender) ? `<span class="card-tag">${rec.gender}</span>` : ''}
+              ${_valid(rec.usage) ? `<span class="card-tag">${rec.usage}</span>` : ''}
+              ${_valid(rec.base_colour) ? `<span class="card-tag">${rec.base_colour}</span>` : ''}
+              ${_valid(rec.season) ? `<span class="card-tag">${rec.season}</span>` : ''}
             </div>
             ${attrParts.length ? `<div class="card-attr">${attrParts.join(' · ')}</div>` : ''}
             <div class="card-score-wrap">
@@ -546,7 +784,7 @@
       const cols = Math.min(items.length, 4);
       const colHtml = items.map(rec => {
         const filename = rec.image_path.split("/").pop();
-        function row(l, v) { return v != null && v !== "" ? `<tr><td class="label">${l}</td><td class="value">${v}</td></tr>` : ""; }
+        function row(l, v) { return _valid(v) ? `<tr><td class="label">${l}</td><td class="value">${v}</td></tr>` : ""; }
         function section(l) { return `<tr class="section-label"><td colspan="2">${l}</td></tr>`; }
         const attrs = rec.article_attributes || {};
         const attrRows = Object.keys(attrs).map(k => row(k.replace(/_/g," "), attrs[k])).join("");
@@ -647,12 +885,12 @@
       const score = (rec.similarity_score * 100).toFixed(1);
 
       function fmt(val, prefix) {
-        if (val == null || val === "") return null;
+        if (!_valid(val)) return null;
         return (prefix || "") + val;
       }
 
       function row(label, val) {
-        if (val == null || val === "") return "";
+        if (!_valid(val)) return "";
         return `<tr><td class="label">${label}</td><td class="value">${val}</td></tr>`;
       }
 

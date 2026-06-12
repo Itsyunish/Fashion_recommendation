@@ -3,10 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Outfit Recommender</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <title>Login - PixelCloset</title>
+  <link rel="stylesheet" href="/css/style.css?v=2">
 </head>
-<body>
-  <script>window.location.href = "/dashboard.html";</script>
+<body class="auth-body">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">Pixel<span>Closet</span></div>
+        <h1>Welcome back</h1>
+        <p class="auth-sub">Sign in to your account</p>
+      </div>
+
+      <form id="loginForm" class="auth-form">
+        <div class="form-group">
+          <label for="loginEmail">Email address</label>
+          <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password">
+        </div>
+        <div id="loginError" class="form-error hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="loginBtn">Sign In</button>
+      </form>
+
+      <p class="auth-footer-text">
+        Don't have an account? <a href="/signup.html">Create one</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/js/app.js?v=2"></script>
+  <script>
+    const toastContainer = document.createElement("div");
+    toastContainer.className = "toast-container";
+    document.body.appendChild(toastContainer);
+
+    function showToast(message, type = "error") {
+      const toast = document.createElement("div");
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      toastContainer.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add("show"));
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    fetch(API_BASE_URL + "/api/auth/me", { credentials: "include" })
+      .then(res => { if (res.ok) window.location.href = "/dashboard.html"; })
+      .catch(() => {});
+
+    const loginForm = document.getElementById("loginForm");
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword");
+    const loginError = document.getElementById("loginError");
+    const loginBtn = document.getElementById("loginBtn");
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      loginError.classList.add("hidden");
+      loginBtn.disabled = true;
+      loginBtn.textContent = "Signing in\u2026";
+
+      try {
+        const res = await fetch(API_BASE_URL + "/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email: loginEmail.value.trim(),
+            password: loginPassword.value,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          loginError.textContent = data.detail || "Invalid email or password";
+          loginError.classList.remove("hidden");
+          return;
+        }
+
+        window.location.href = "/dashboard.html";
+      } catch (err) {
+        loginError.textContent = "Unable to connect. Make sure the server is running.";
+        loginError.classList.remove("hidden");
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Sign In";
+      }
+    });
+  </script>
 </body>
 </html>
