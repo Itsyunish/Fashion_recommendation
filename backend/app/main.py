@@ -9,19 +9,30 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
-from starlette.responses import FileResponse
+import bcrypt
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import FileResponse
 
-from sqlalchemy import text
-
+from app.config import settings
 from app.database import get_db, init_db
-from app.schemas import RecommendResponse, RecommendationOut
+from app.schemas import (
+    AuthResponse,
+    ChangePasswordRequest,
+    LoginRequest,
+    RecommendResponse,
+    RecommendationOut,
+    SignupRequest,
+    UpdateProfileRequest,
+    UserOut,
+)
 from app.services.feature_extractor import extract_features, get_model
 from app.services.image_repo import find_csv, get_embedding_count, get_style_by_image_path, seed_from_csv
-from app.models import Embedding
+from app.models import Embedding, User
 from app.services.similarity import find_similar
 
 ALLOWED_EXTENSIONS: set[str] = {".jpg", ".jpeg", ".png", ".webp"}
@@ -36,7 +47,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
 
 app = FastAPI(
-    title="Outfit Recommendation System",
+    title="PixelCloset",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -48,6 +59,138 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SESSION_SECRET_KEY,
+    max_age=settings.SESSION_MAX_AGE,
+    same_site="lax",
+    https_only=False,
+)
+
+# ── Auth helpers ──────────────────────────────────────────────────────────
+
+
+async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)) -> User:
+    """Dependency that returns the authenticated user or raises 401."""
+    user_id = request.session.get("user_id")
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
+
+
+# ── Auth Endpoints ────────────────────────────────────────────────────────
+
+
+@app.post("/api/auth/signup", response_model=AuthResponse)
+async def signup(body: SignupRequest, request: Request, db: AsyncSession = Depends(get_db)) -> AuthResponse:
+    """Register a new user account."""
+    result = await db.execute(select(User).where(User.email == body.email))
+    if result.scalar_one_or_none():
+        raise HTTPException(409, "Email already registered")
+
+    result = await db.execute(select(User).where(User.username == body.username))
+    if result.scalar_one_or_none():
+        raise HTTPException(409, "Username already taken")
+
+    user = User(
+        username=body.username,
+        email=body.email,
+        password_hash=bcrypt.hashpw(body.password.encode(), bcrypt.gensalt()).decode(),
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    request.session["user_id"] = user.id
+    return AuthResponse(
+        message="Account created successfully",
+        user=UserOut(id=user.id, username=user.username, email=user.email),
+    )
+
+
+@app.post("/api/auth/login", response_model=AuthResponse)
+async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends(get_db)) -> AuthResponse:
+    """Authenticate a user and create a session."""
+    result = await db.execute(select(User).where(User.email == body.email))
+    user = result.scalar_one_or_none()
+    if not user or not bcrypt.checkpw(body.password.encode(), user.password_hash.encode()):
+        raise HTTPException(401, "Invalid email or password")
+
+    request.session["user_id"] = user.id
+    return AuthResponse(
+        message="Logged in successfully",
+        user=UserOut(id=user.id, username=user.username, email=user.email),
+    )
+
+
+@app.post("/api/auth/logout")
+async def logout(request: Request) -> dict:
+    """Clear the user session."""
+    request.session.clear()
+    return {"message": "Logged out"}
+
+
+@app.get("/api/auth/me", response_model=UserOut)
+async def me(current_user: User = Depends(get_current_user)) -> UserOut:
+    """Return the currently authenticated user's info."""
+    return UserOut(id=current_user.id, username=current_user.username, email=current_user.email)
+
+
+@app.delete("/api/auth/me")
+async def delete_account(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Delete the authenticated user's account."""
+    await db.delete(current_user)
+    await db.commit()
+    request.session.clear()
+    return {"message": "Account deleted"}
+
+
+@app.post("/api/auth/change-password")
+async def change_password(
+    body: ChangePasswordRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Change the authenticated user's password."""
+    if not bcrypt.checkpw(body.old_password.encode(), current_user.password_hash.encode()):
+        raise HTTPException(400, "Current password is incorrect")
+    current_user.password_hash = bcrypt.hashpw(body.new_password.encode(), bcrypt.gensalt()).decode()
+    await db.commit()
+    return {"message": "Password changed successfully"}
+
+
+@app.put("/api/auth/me", response_model=AuthResponse)
+async def update_profile(
+    body: UpdateProfileRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AuthResponse:
+    """Update the authenticated user's username and/or email."""
+    if body.username is not None:
+        result = await db.execute(select(User).where(User.username == body.username, User.id != current_user.id))
+        if result.scalar_one_or_none():
+            raise HTTPException(409, "Username already taken")
+        current_user.username = body.username
+    if body.email is not None:
+        result = await db.execute(select(User).where(User.email == body.email, User.id != current_user.id))
+        if result.scalar_one_or_none():
+            raise HTTPException(409, "Email already registered")
+        current_user.email = body.email
+    await db.commit()
+    return AuthResponse(
+        message="Profile updated",
+        user=UserOut(id=current_user.id, username=current_user.username, email=current_user.email),
+    )
 
 
 # ── Endpoints ──────────────────────────────────────────────────────────────
@@ -140,8 +283,13 @@ class _CORSStaticFiles(StaticFiles):
         response.headers["Access-Control-Allow-Origin"] = "*"
         return response
 
-images_dir = Path(__file__).resolve().parent.parent / "static" / "images"
-if images_dir.is_dir():
+_root = Path(__file__).resolve().parent.parent.parent
+_images_candidates = [
+    _root / "data_2" / "archive (1)" / "fashion-dataset" / "images",
+    _root / "backend" / "static" / "images",
+]
+images_dir = next((d for d in _images_candidates if d.is_dir()), None)
+if images_dir is not None:
     app.mount("/images", _CORSStaticFiles(directory=str(images_dir)), name="images")
 
 frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
