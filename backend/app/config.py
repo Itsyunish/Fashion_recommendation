@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     SESSION_MAX_AGE: int = 604800  # 7 days in seconds
 
     # Fine-tune model settings
-    ENABLE_FINE_TUNE: bool = False
+    ENABLE_FINE_TUNE: bool = True
     FINE_TUNE_MODEL_PATH: str = "fine_tuned_model/best_fashion_model.pt"
     FINE_TUNE_EMBED_PATH: str = "fine_tuned_model/best_embeddings.csv"
 
