@@ -77,3 +77,61 @@ async def logout(request: Request) -> dict:
     """Clear the user session."""
     request.session.clear()
     return {"message": "Logged out"}
+
+
+@router.get("/me", response_model=UserOut)
+async def me(current_user: User = Depends(get_current_user)) -> UserOut:
+    """Return the currently authenticated user's info."""
+    return UserOut(id=current_user.id, username=current_user.username, email=current_user.email)
+
+
+@router.delete("/me")
+async def delete_account(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Delete the authenticated user's account."""
+    await db.delete(current_user)
+    await db.commit()
+    request.session.clear()
+    return {"message": "Account deleted"}
+
+
+@router.post("/change-password")
+async def change_password(
+    body: ChangePasswordRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Change the authenticated user's password."""
+    if not bcrypt.checkpw(body.old_password.encode(), current_user.password_hash.encode()):
+        raise HTTPException(400, "Current password is incorrect")
+    current_user.password_hash = bcrypt.hashpw(body.new_password.encode(), bcrypt.gensalt()).decode()
+    await db.commit()
+    return {"message": "Password changed successfully"}
+
+
+@router.put("/me", response_model=AuthResponse)
+async def update_profile(
+    body: UpdateProfileRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AuthResponse:
+    """Update the authenticated user's username and/or email."""
+    if body.username is not None:
+        result = await db.execute(select(User).where(User.username == body.username, User.id != current_user.id))
+        if result.scalar_one_or_none():
+            raise HTTPException(409, "Username already taken")
+        current_user.username = body.username
+    if body.email is not None:
+        result = await db.execute(select(User).where(User.email == body.email, User.id != current_user.id))
+        if result.scalar_one_or_none():
+            raise HTTPException(409, "Email already registered")
+        current_user.email = body.email
+    await db.commit()
+    return AuthResponse(
+        message="Profile updated",
+        user=UserOut(id=current_user.id, username=current_user.username, email=current_user.email),
+    )
