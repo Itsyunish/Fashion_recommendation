@@ -55,13 +55,10 @@ def get_fine_tune_model():
     return _model
 
 
-def extract_fine_tune_features(img_bytes: bytes) -> np.ndarray:
+def extract_fine_tune_features(img_bytes: bytes) -> np.ndarray | None:
     model = get_fine_tune_model()
     if model is None or _device is None:
-        raise RuntimeError(
-            "Fine-tuned model is not available. "
-            "Make sure PyTorch is installed and the model file exists."
-        )
+        return None
 
     import torch
     from torchvision import transforms

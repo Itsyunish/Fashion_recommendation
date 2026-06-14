@@ -37,6 +37,8 @@ async def fine_tune_recommend(
 
     content = await file.read()
     query_vec = extract_fine_tune_features(content)
+    if query_vec is None:
+        raise HTTPException(503, "fine-tuned model is not available (PyTorch or model file missing)")
     results = await find_similar_fine_tune(db, query_vec, top_k=top_k)
 
     return RecommendResponse(
@@ -97,6 +99,8 @@ async def add_fine_tune_embedding(
     save_path.write_bytes(content)
 
     vec = extract_fine_tune_features(content)
+    if vec is None:
+        raise HTTPException(503, "fine-tuned model is not available (PyTorch or model file missing)")
     db.add(FineTuneEmbedding(image_path=str(save_path), embedding=vec.tolist()))
     await db.commit()
 
@@ -120,6 +124,8 @@ async def fine_tune_compare(
     base_results = await find_similar(db, base_vec, top_k=top_k)
 
     ft_vec = extract_fine_tune_features(content)
+    if ft_vec is None:
+        raise HTTPException(503, "fine-tuned model is not available (PyTorch or model file missing)")
     ft_results = await find_similar_fine_tune(db, ft_vec, top_k=top_k)
 
     def _to_item(path: str, score: float, model_type: str) -> FineTuneCompareItem:

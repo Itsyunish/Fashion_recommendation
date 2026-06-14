@@ -11,20 +11,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install uv
 RUN pip install --no-cache-dir uv
 
-# Pre-install torch/torchvision from the CPU-only index so that:
-#   1. We avoid bundling the CUDA runtime (triggers the cuInit error in containers)
-#   2. The wheel is much smaller
-#   3. torch is available even if uv cannot resolve it for Python 3.13 from PyPI
-RUN uv pip install --system \
-    --index-url https://download.pytorch.org/whl/cpu \
-    'torch>=2.5.0' 'torchvision>=0.20.0'
-
 # Copy project files
 COPY pyproject.toml .
 
-# Compile & install the remaining dependencies
+# Compile & install all dependencies (including GPU torch from PyPI)
 RUN uv pip compile --python-version 3.13 pyproject.toml > requirements.txt
 RUN uv pip install --system -r requirements.txt
+
+# Re-install torch/torchvision from CPU-only index on top so the CPU
+# wheel is used (smaller, no CUDA deps).  NVIDIA libraries from
+# tensorflow/torch remain available if a GPU is added later.
+RUN uv pip install --system \
+    --index-url https://download.pytorch.org/whl/cpu \
+    'torch>=2.5.0' 'torchvision>=0.20.0'
 
 # ── Runtime stage ───────────────────────────────────────────────────────
 FROM python:3.13-slim AS runtime
