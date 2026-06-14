@@ -7,7 +7,8 @@ from pathlib import Path
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Embedding
+from app.config import settings
+from app.models import Embedding, FineTuneEmbedding
 
 _styles: dict[str, dict] | None = None
 _json_dir: Path | None = None
@@ -146,6 +147,38 @@ async def seed_from_csv(db: AsyncSession, csv_path: str) -> int:
         for row in reader:
             embedding = json.loads(row["embedding"])
             db.add(Embedding(image_path=row["image_path"], embedding=embedding))
+            total += 1
+            if total % 500 == 0:
+                await db.flush()
+        await db.commit()
+    return total
+
+
+def find_fine_tune_csv() -> Path | None:
+    root = Path(__file__).resolve().parent.parent.parent.parent
+    candidates = [
+        Path(settings.FINE_TUNE_EMBED_PATH),
+        root / settings.FINE_TUNE_EMBED_PATH,
+        Path("/app/fine_tuned_model/best_embeddings.csv"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return None
+
+
+async def get_fine_tune_embedding_count(db: AsyncSession) -> int:
+    count = await db.scalar(select(func.count(FineTuneEmbedding.id)))
+    return count or 0
+
+
+async def seed_fine_tune_from_csv(db: AsyncSession, csv_path: str) -> int:
+    total = 0
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            embedding = json.loads(row["embedding"])
+            db.add(FineTuneEmbedding(image_path=row["image_path"], embedding=embedding))
             total += 1
             if total % 500 == 0:
                 await db.flush()

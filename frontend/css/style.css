@@ -1572,3 +1572,69 @@ body {
 .about-card p {
   color: var(--text-secondary);
 }
+
+/* ── Fine-Tune / Compare ──────────────────────────────────── */
+.ft-btn-row {
+  margin-top: 0.75rem;
+}
+
+.compare-side-by-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.compare-side-col {
+  min-width: 0;
+}
+
+.compare-side-card {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.compare-side-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.compare-side-info {
+  min-width: 0;
+}
+
+.compare-side-score {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.compare-side-name {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.compare-grid-wrap {
+  margin-top: 0.5rem;
+}
+
+#compareResultsStats {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}

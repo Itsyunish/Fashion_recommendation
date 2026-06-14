@@ -26,3 +26,13 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, server_default=text("NOW()"))
+
+
+class FineTuneEmbedding(Base):
+    """Stores fine-tuned 1536-dim feature vectors alongside their image paths."""
+
+    __tablename__ = "fine_tune_embeddings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    image_path = Column(Text, nullable=False)
+    embedding = Column(Vector(settings.EMBEDDING_DIM), nullable=False)

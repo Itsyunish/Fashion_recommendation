@@ -25,3 +25,22 @@ async def find_similar(
     result = await db.execute(stmt, {"top_k": top_k})
     rows = result.fetchall()
     return [(row[0], float(row[1])) for row in rows]
+
+
+async def find_similar_fine_tune(
+    db: AsyncSession,
+    query_embedding: np.ndarray,
+    top_k: int = settings.TOP_K_RECOMMENDATIONS,
+) -> list[tuple[str, float]]:
+    """Return top‑K from fine_tune_embeddings using pgvector cosine distance."""
+    vec_literal = "[" + ",".join(str(v) for v in query_embedding.tolist()) + "]"
+
+    stmt = text(f"""
+        SELECT image_path, 1 - (embedding <=> '{vec_literal}'::vector) AS similarity
+        FROM fine_tune_embeddings
+        ORDER BY similarity DESC
+        LIMIT :top_k
+    """)
+    result = await db.execute(stmt, {"top_k": top_k})
+    rows = result.fetchall()
+    return [(row[0], float(row[1])) for row in rows]

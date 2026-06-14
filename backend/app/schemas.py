@@ -108,3 +108,33 @@ class UpdateProfileRequest(BaseModel):
 
     username: str | None = None
     email: str | None = None
+
+
+class FineTuneCompareItem(BaseModel):
+    """A single recommendation result from one model (base or fine-tuned)."""
+
+    model_type: str  # "base" or "fine_tune"
+    similarity_score: float
+    image_path: str
+    article_type: str | None = None
+    base_colour: str | None = None
+    season: str | None = None
+    product_display_name: str | None = None
+    brand_name: str | None = None
+    price: float | None = None
+    discounted_price: float | None = None
+    rating: float | None = None
+    gender: str | None = None
+    master_category: str | None = None
+    sub_category: str | None = None
+    usage: str | None = None
+    year: str | None = None
+    article_attributes: dict | None = None
+
+
+class CompareResponse(BaseModel):
+    """Response with recommendations from both base and fine-tuned models."""
+
+    query_image: str
+    base_recommendations: list[FineTuneCompareItem]
+    fine_tune_recommendations: list[FineTuneCompareItem]
