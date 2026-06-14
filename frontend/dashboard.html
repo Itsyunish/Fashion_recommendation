@@ -13,6 +13,7 @@
       <a class="nav-brand" href="#" data-page="home">Pixel<span class="brand-accent">Closet</span></a>
       <div class="nav-links">
         <a href="#" data-page="home" class="nav-link active">Home</a>
+        <a href="#" data-page="fine-tune" class="nav-link hidden" id="navFineTune">Fine Tune</a>
         <a href="#" data-page="about" class="nav-link">About</a>
         <a href="#" data-page="settings" class="nav-link">Settings</a>
         <button class="nav-link" id="logoutBtn" style="border:none;cursor:pointer">Logout</button>
@@ -125,6 +126,91 @@
           <p>FastAPI · EfficientNetB3 · PostgreSQL · pgvector · TensorFlow · Docker</p>
         </div>
       </div>
+    </div>
+  </main>
+
+  <!-- Page: Fine Tune -->
+  <main id="page-fine-tune" class="page">
+    <!-- Seed banner -->
+    <div class="container">
+      <div id="ftSeedBanner" class="seed-banner hidden">
+        <div class="seed-banner-content">
+          <strong>Fine-tune database not seeded.</strong>
+          <span id="ftSeedMsg">Load fine-tuned embeddings from CSV to enable fine-tuned recommendations.</span>
+          <button class="btn btn-primary" id="ftSeedBtn">Seed Fine-Tune DB</button>
+        </div>
+        <div id="ftSeedProgress" class="seed-progress hidden">
+          <span class="spinner"></span>
+          <span id="ftSeedStatusText">Seeding fine-tune database…</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="container home-layout">
+      <!-- Left: Query panel -->
+      <aside class="query-panel">
+        <div class="query-card">
+          <h2 class="query-title">Fine-Tune Query</h2>
+          <p class="query-sub">Upload a photo to get recommendations from the fine-tuned model.</p>
+
+          <div class="top-k-row">
+            <label for="ftTopKSlider">Results: <span id="ftTopKValue">5</span></label>
+            <input type="range" id="ftTopKSlider" min="1" max="20" value="5">
+          </div>
+
+          <div class="drop-zone" id="ftDropZone">
+            <div class="drop-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--primary)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            </div>
+            <p>Drag & drop an image, or <span class="link">browse</span></p>
+          </div>
+          <input type="file" id="ftFileInput" accept="image/*" hidden>
+
+          <div class="preview-container" id="ftPreviewContainer">
+            <img id="ftPreviewImage" alt="Uploaded image">
+            <div class="ft-btn-row">
+              <button class="btn btn-primary btn-full" id="ftRecommendBtn" disabled>Get Fine-Tune Recommendations</button>
+              <button class="btn btn-full" id="ftCompareBtn" disabled style="background:var(--border);color:var(--text);margin-top:0.5rem">Compare Both Models</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right: Results -->
+      <section class="results-panel">
+        <!-- Fine-Tune only results -->
+        <div id="ftResultsPlaceholder">
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <p>Upload an image to see fine-tuned recommendations</p>
+          </div>
+        </div>
+
+        <div id="ftResultsContent" class="hidden">
+          <div class="results-header">
+            <h2>Fine-Tune Recommendations</h2>
+            <div class="results-stats" id="ftResultsStats"></div>
+          </div>
+          <div class="result-grid" id="ftResultGrid"></div>
+        </div>
+
+        <!-- Comparison results (side by side) -->
+        <div id="compareResultsContent" class="hidden">
+          <div class="results-header">
+            <h2>Model Comparison</h2>
+            <div class="results-stats" id="compareResultsStats"></div>
+          </div>
+          <div class="compare-grid-wrap" id="compareGridWrap"></div>
+        </div>
+
+        <div id="ftLoadingOverlay" class="hidden">
+          <div class="loading-content">
+            <div class="spinner lg"></div>
+            <p>Processing…</p>
+            <p class="loading-sub" id="ftLoadingMsg">Finding similar outfits</p>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -426,6 +512,21 @@
         showToast("Network error: " + err.message);
       }
     });
+
+    // ── Config check ──────────────────────────────────────────────
+    let _enableFineTune = false;
+
+    async function checkConfig() {
+      try {
+        const res = await fetch(API_BASE_URL + "/api/config");
+        const cfg = await res.json();
+        _enableFineTune = cfg.enable_fine_tune === true;
+        if (_enableFineTune) {
+          document.getElementById("navFineTune").classList.remove("hidden");
+        }
+      } catch { /* ignore */ }
+    }
+    checkConfig();
 
     // ── Check seed status ─────────────────────────────────────────
     async function checkSeed() {
@@ -960,6 +1061,265 @@
     function closeDetailModal() {
       const el = document.getElementById("detailModal");
       if (el) el.remove();
+    }
+
+    // ── Fine-Tune Page ──────────────────────────────────────────
+
+    // Elements
+    const ftSeedBanner = document.getElementById("ftSeedBanner");
+    const ftSeedBtn = document.getElementById("ftSeedBtn");
+    const ftSeedMsg = document.getElementById("ftSeedMsg");
+    const ftSeedProgress = document.getElementById("ftSeedProgress");
+    const ftSeedStatusText = document.getElementById("ftSeedStatusText");
+    const ftDropZone = document.getElementById("ftDropZone");
+    const ftFileInput = document.getElementById("ftFileInput");
+    const ftPreviewContainer = document.getElementById("ftPreviewContainer");
+    const ftPreviewImage = document.getElementById("ftPreviewImage");
+    const ftRecommendBtn = document.getElementById("ftRecommendBtn");
+    const ftCompareBtn = document.getElementById("ftCompareBtn");
+    const ftResultsPlaceholder = document.getElementById("ftResultsPlaceholder");
+    const ftResultsContent = document.getElementById("ftResultsContent");
+    const ftResultGrid = document.getElementById("ftResultGrid");
+    const ftResultsStats = document.getElementById("ftResultsStats");
+    const ftLoadingOverlay = document.getElementById("ftLoadingOverlay");
+    const ftLoadingMsg = document.getElementById("ftLoadingMsg");
+    const ftTopKSlider = document.getElementById("ftTopKSlider");
+    const ftTopKValue = document.getElementById("ftTopKValue");
+    const compareResultsContent = document.getElementById("compareResultsContent");
+    const compareGridWrap = document.getElementById("compareGridWrap");
+    const compareResultsStats = document.getElementById("compareResultsStats");
+
+    let ftSelectedFile = null;
+
+    // Check fine-tune seed status when page is shown
+    document.querySelector('[data-page="fine-tune"]').addEventListener("click", async () => {
+      if (!_enableFineTune) return;
+      try {
+        const res = await fetch(API_BASE_URL + "/api/fine-tune/seed/status");
+        const data = await res.json();
+        if (!data.seeded) ftSeedBanner.classList.remove("hidden");
+        else ftSeedBanner.classList.add("hidden");
+      } catch { /* ignore */ }
+    });
+
+    ftTopKSlider.addEventListener("input", () => {
+      ftTopKValue.textContent = ftTopKSlider.value;
+    });
+
+    // Fine-tune seed
+    ftSeedBtn.addEventListener("click", async () => {
+      ftSeedBtn.disabled = true;
+      ftSeedMsg.classList.add("hidden");
+      ftSeedProgress.classList.remove("hidden");
+      ftSeedStatusText.textContent = "Seeding fine-tune database… (may take a minute)";
+
+      try {
+        const res = await fetch(API_BASE_URL + "/api/fine-tune/seed", { method: "POST" });
+        const data = await res.json();
+        if (res.ok) {
+          ftSeedStatusText.textContent = "Seeded successfully.";
+          setTimeout(() => ftSeedBanner.classList.add("hidden"), 2000);
+        } else {
+          ftSeedStatusText.textContent = `Failed: ${data.detail || "Error"}`;
+        }
+      } catch (err) {
+        ftSeedStatusText.textContent = `Error: ${err.message}`;
+      } finally {
+        ftSeedBtn.disabled = false;
+        ftSeedProgress.classList.add("hidden");
+        ftSeedMsg.classList.remove("hidden");
+      }
+    });
+
+    // Drag & drop for fine-tune
+    ftDropZone.addEventListener("click", () => ftFileInput.click());
+
+    ftDropZone.addEventListener("dragover", e => {
+      e.preventDefault();
+      ftDropZone.classList.add("dragover");
+    });
+    ftDropZone.addEventListener("dragleave", () => ftDropZone.classList.remove("dragover"));
+
+    ftDropZone.addEventListener("drop", e => {
+      e.preventDefault();
+      ftDropZone.classList.remove("dragover");
+      if (e.dataTransfer.files.length) ftHandleFile(e.dataTransfer.files[0]);
+    });
+
+    ftFileInput.addEventListener("change", () => {
+      if (ftFileInput.files.length) ftHandleFile(ftFileInput.files[0]);
+    });
+
+    function ftHandleFile(file) {
+      if (!file.type.startsWith("image/")) {
+        showToast("Please select an image file.");
+        return;
+      }
+      ftSelectedFile = file;
+      const reader = new FileReader();
+      reader.onload = e => {
+        ftPreviewImage.src = e.target.result;
+        ftPreviewContainer.style.display = "block";
+        ftDropZone.classList.add("has-image");
+        ftRecommendBtn.disabled = false;
+        ftCompareBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Fine-tune recommend
+    ftRecommendBtn.addEventListener("click", async () => {
+      if (!ftSelectedFile) return;
+
+      const topK = parseInt(ftTopKSlider.value, 10);
+      ftRecommendBtn.disabled = true;
+      ftRecommendBtn.textContent = "Analysing…";
+
+      compareResultsContent.classList.add("hidden");
+      ftResultsPlaceholder.classList.add("hidden");
+      ftResultsContent.classList.add("hidden");
+      ftLoadingOverlay.classList.remove("hidden");
+      ftLoadingMsg.textContent = "Searching with fine-tuned model…";
+
+      try {
+        const formData = new FormData();
+        formData.append("file", ftSelectedFile);
+        const url = API_BASE_URL + `/api/fine-tune/recommend?top_k=${topK}`;
+        const res = await fetch(url, { method: "POST", body: formData });
+
+        if (res.status === 404) {
+          ftLoadingOverlay.classList.add("hidden");
+          ftResultsPlaceholder.classList.remove("hidden");
+          ftResultsPlaceholder.innerHTML = `<div class="empty-state"><p>No fine-tune embeddings in database. Seed the data first.</p></div>`;
+          return;
+        }
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Request failed");
+
+        ftLoadingOverlay.classList.add("hidden");
+        ftRenderResults(data);
+      } catch (err) {
+        ftLoadingOverlay.classList.add("hidden");
+        ftResultsPlaceholder.classList.remove("hidden");
+        showToast(err.message);
+      } finally {
+        ftRecommendBtn.disabled = false;
+        ftRecommendBtn.textContent = "Get Fine-Tune Recommendations";
+      }
+    });
+
+    function ftRenderResults(data) {
+      ftLoadingOverlay.classList.add("hidden");
+
+      if (!data.recommendations || data.recommendations.length === 0) {
+        ftResultsPlaceholder.classList.remove("hidden");
+        ftResultsPlaceholder.innerHTML = `<div class="empty-state"><p>No similar outfits found.</p></div>`;
+        return;
+      }
+
+      ftResultsPlaceholder.classList.add("hidden");
+      const recs = data.recommendations;
+      ftResultsStats.innerHTML = `
+        <span class="stat"><strong>${recs.length}</strong> results (fine-tuned)</span>
+      `;
+
+      ftResultGrid.innerHTML = "";
+      for (const rec of recs) {
+        const score = (rec.similarity_score * 100).toFixed(1);
+        const barWidth = Math.max(4, rec.similarity_score * 100);
+        const card = document.createElement("div");
+        card.className = "result-card";
+        card.innerHTML = `
+          <div class="card-img-wrap" style="background-image: url(${API_BASE_URL}${rec.image_path})">
+          </div>
+          <div class="card-body">
+            ${rec.product_display_name ? `<div class="card-title">${rec.product_display_name}</div>` : `<div class="card-title">${rec.image_path.split("/").pop()}</div>`}
+            ${rec.brand_name ? `<div class="card-brand">${rec.brand_name}</div>` : ''}
+            <div class="card-score-wrap">
+              <div class="card-score-bar" style="width:${barWidth}%"></div>
+            </div>
+            <div class="card-score">${score}% match</div>
+          </div>
+        `;
+        ftResultGrid.appendChild(card);
+      }
+      ftResultsContent.classList.remove("hidden");
+    }
+
+    // Compare both models
+    ftCompareBtn.addEventListener("click", async () => {
+      if (!ftSelectedFile) return;
+
+      const topK = parseInt(ftTopKSlider.value, 10);
+      ftCompareBtn.disabled = true;
+      ftCompareBtn.textContent = "Comparing…";
+
+      ftResultsContent.classList.add("hidden");
+      compareResultsContent.classList.add("hidden");
+      ftResultsPlaceholder.classList.add("hidden");
+      ftLoadingOverlay.classList.remove("hidden");
+      ftLoadingMsg.textContent = "Running both models…";
+
+      try {
+        const formData = new FormData();
+        formData.append("file", ftSelectedFile);
+        const url = API_BASE_URL + `/api/fine-tune/compare?top_k=${topK}`;
+        const res = await fetch(url, { method: "POST", body: formData });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data?.detail || "Request failed");
+        ftLoadingOverlay.classList.add("hidden");
+        ftRenderCompare(data);
+      } catch (err) {
+        ftLoadingOverlay.classList.add("hidden");
+        ftResultsPlaceholder.classList.remove("hidden");
+        showToast(err.message);
+      } finally {
+        ftCompareBtn.disabled = false;
+        ftCompareBtn.textContent = "Compare Both Models";
+      }
+    });
+
+    function ftRenderCompare(data) {
+      ftResultsContent.classList.add("hidden");
+      compareResultsContent.classList.remove("hidden");
+
+      const baseRecs = data.base_recommendations || [];
+      const ftRecs = data.fine_tune_recommendations || [];
+      const maxLen = Math.max(baseRecs.length, ftRecs.length);
+
+      compareResultsStats.innerHTML = `
+        <span class="stat"><strong>${baseRecs.length}</strong> base · <strong>${ftRecs.length}</strong> fine-tuned</span>
+      `;
+
+      let html = '<div class="compare-side-by-side">';
+      html += `<div class="compare-side-col"><h3 style="margin:0 0 0.75rem;font-size:1rem">Base Model</h3>`;
+      for (const rec of baseRecs) {
+        const score = (rec.similarity_score * 100).toFixed(1);
+        html += `<div class="compare-side-card">
+          <div class="compare-side-img" style="background-image:url(${API_BASE_URL}${rec.image_path})"></div>
+          <div class="compare-side-info">
+            <div class="compare-side-score">${score}%</div>
+            ${rec.product_display_name ? `<div class="compare-side-name">${rec.product_display_name}</div>` : ''}
+          </div>
+        </div>`;
+      }
+      html += `</div>`;
+      html += `<div class="compare-side-col"><h3 style="margin:0 0 0.75rem;font-size:1rem">Fine-Tuned Model</h3>`;
+      for (const rec of ftRecs) {
+        const score = (rec.similarity_score * 100).toFixed(1);
+        html += `<div class="compare-side-card">
+          <div class="compare-side-img" style="background-image:url(${API_BASE_URL}${rec.image_path})"></div>
+          <div class="compare-side-info">
+            <div class="compare-side-score">${score}%</div>
+            ${rec.product_display_name ? `<div class="compare-side-name">${rec.product_display_name}</div>` : ''}
+          </div>
+        </div>`;
+      }
+      html += `</div></div>`;
+
+      compareGridWrap.innerHTML = html;
     }
   </script>
 </body>
