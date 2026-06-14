@@ -803,7 +803,8 @@
         card.className = "result-card";
 
         card.innerHTML = `
-          <div class="card-img-wrap" style="background-image: url(${API_BASE_URL}${rec.image_path})">
+          <div class="card-img-wrap">
+            <img src="${API_BASE_URL}${rec.image_path}" alt="" loading="lazy">
             <button class="card-fav ${isFav ? "active" : ""}" data-path="${rec.image_path}"
               onclick="event.stopPropagation();toggleFavorite(this, this.dataset.path)">${isFav ? "♥" : "♡"}</button>
             <input type="checkbox" class="card-compare-check" data-path="${rec.image_path}"
@@ -1231,7 +1232,8 @@
         const card = document.createElement("div");
         card.className = "result-card";
         card.innerHTML = `
-          <div class="card-img-wrap" style="background-image: url(${API_BASE_URL}${rec.image_path})">
+          <div class="card-img-wrap">
+            <img src="${API_BASE_URL}${rec.image_path}" alt="" loading="lazy">
           </div>
           <div class="card-body">
             ${rec.product_display_name ? `<div class="card-title">${rec.product_display_name}</div>` : `<div class="card-title">${rec.image_path.split("/").pop()}</div>`}
@@ -1298,7 +1300,7 @@
       for (const rec of baseRecs) {
         const score = (rec.similarity_score * 100).toFixed(1);
         html += `<div class="compare-side-card">
-          <div class="compare-side-img" style="background-image:url(${API_BASE_URL}${rec.image_path})"></div>
+          <div class="compare-side-img"><img src="${API_BASE_URL}${rec.image_path}" alt="" loading="lazy"></div>
           <div class="compare-side-info">
             <div class="compare-side-score">${score}%</div>
             ${rec.product_display_name ? `<div class="compare-side-name">${rec.product_display_name}</div>` : ''}
@@ -1310,7 +1312,7 @@
       for (const rec of ftRecs) {
         const score = (rec.similarity_score * 100).toFixed(1);
         html += `<div class="compare-side-card">
-          <div class="compare-side-img" style="background-image:url(${API_BASE_URL}${rec.image_path})"></div>
+          <div class="compare-side-img"><img src="${API_BASE_URL}${rec.image_path}" alt="" loading="lazy"></div>
           <div class="compare-side-info">
             <div class="compare-side-score">${score}%</div>
             ${rec.product_display_name ? `<div class="compare-side-name">${rec.product_display_name}</div>` : ''}
