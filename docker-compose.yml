@@ -18,9 +18,7 @@ services:
       retries: 5
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: capstone_project-backend
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -29,12 +27,14 @@ services:
       TF_CPP_MIN_LOG_LEVEL: 2
       DATABASE_URL: postgresql+asyncpg://outfit_user:outfit_pass@db:5432/outfit_db
       DATABASE_URL_SYNC: postgresql+psycopg2://outfit_user:outfit_pass@db:5432/outfit_db
+      ENABLE_FINE_TUNE: "true"
     volumes:
       - ./backend:/app
       - ./embeddings_3.csv:/app/embeddings.csv
       - "./data_2/archive (1)/fashion-dataset/images:/app/static/images"
       - "./data_2/archive (1)/fashion-dataset/styles.csv:/app/static/styles.csv"
       - "./data_2/archive (1)/fashion-dataset/styles:/app/static/styles"
+      - ./fine_tuned_model:/app/fine_tuned_model
     depends_on:
       db:
         condition: service_healthy

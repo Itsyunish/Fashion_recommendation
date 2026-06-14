@@ -24,3 +24,8 @@ embeddings_3.csv
 
 *.zip
 
+*.csv
+
+
+# fined tuned model 
+*.pt
