@@ -14,13 +14,14 @@ RUN pip install --no-cache-dir uv
 # Copy project files
 COPY pyproject.toml .
 
-# Compile & install all dependencies (including GPU torch from PyPI)
+# Remove torch/torchvision from pyproject.toml so uv doesn't pull GPU version
+RUN sed -i '/torch/d' pyproject.toml
+
+# Compile & install all dependencies (without torch)
 RUN uv pip compile --python-version 3.13 pyproject.toml > requirements.txt
 RUN uv pip install --system -r requirements.txt
 
-# Re-install torch/torchvision from CPU-only index on top so the CPU
-# wheel is used (smaller, no CUDA deps).  NVIDIA libraries from
-# tensorflow/torch remain available if a GPU is added later.
+# Install torch/torchvision from CPU-only index
 RUN uv pip install --system \
     --index-url https://download.pytorch.org/whl/cpu \
     'torch>=2.5.0' 'torchvision>=0.20.0'
