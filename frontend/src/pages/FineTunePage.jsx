@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
 import { useToast } from '../context/ToastContext';
 import SeedBanner from '../components/SeedBanner';
@@ -17,6 +17,19 @@ export default function FineTunePage() {
 
   const [ftResults, setFtResults] = useState(null);
   const [compareData, setCompareData] = useState(null);
+  const [ftSeeded, setFtSeeded] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(API_BASE_URL + '/api/fine-tune/seed/status');
+        const data = await res.json();
+        if (!cancelled) setFtSeeded(data.seeded);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleFileSelect = useCallback((file) => {
     setSelectedFile(file);
@@ -85,7 +98,7 @@ export default function FineTunePage() {
 
   return (
     <>
-      <SeedBanner type="fine-tune" />
+      {ftSeeded === false && <SeedBanner type="fine-tune" />}
 
       <div className="container home-layout">
         <aside className="query-panel">
