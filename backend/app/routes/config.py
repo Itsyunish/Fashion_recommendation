@@ -11,4 +11,5 @@ async def get_config() -> dict:
     """Expose non-sensitive config to the frontend."""
     return {
         "enable_fine_tune": settings.ENABLE_FINE_TUNE,
+        "use_keras": settings.USE_KERAS,
     }

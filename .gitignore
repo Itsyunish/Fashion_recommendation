@@ -29,3 +29,6 @@ embeddings_3.csv
 
 # fined tuned model 
 *.pt
+
+*.keras
+

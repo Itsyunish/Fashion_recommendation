@@ -34,8 +34,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         from app.services.fine_tune_extractor import get_fine_tune_model
         if get_fine_tune_model() is None:
             logger.warning(
-                "Fine-tuned model not available (PyTorch missing or .pt file not found). "
-                "Fine-tune endpoints will return errors until the dependency is installed."
+                "Fine-tuned model not available. "
+                "Fine-tune endpoints will return errors until the model file is available."
             )
     yield
 

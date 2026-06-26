@@ -17,8 +17,11 @@ class Settings(BaseSettings):
 
     # Fine-tune model settings
     ENABLE_FINE_TUNE: bool = True
+    USE_KERAS: bool = True
     FINE_TUNE_MODEL_PATH: str = "fine_tuned_model/best_fashion_model.pt"
     FINE_TUNE_EMBED_PATH: str = "fine_tuned_model/best_embeddings.csv"
+    FINE_TUNE_KERAS_MODEL_PATH: str = "fine_tuned_model/best_model.keras"
+    FINE_TUNE_KERAS_EMBED_PATH: str = "fine_tuned_model/fine_tuned_embeddings.csv"
 
     class Config:
         env_file = ".env"
