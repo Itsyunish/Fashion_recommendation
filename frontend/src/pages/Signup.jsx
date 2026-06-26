@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import { useApp } from '../context/AppContext';
+import { useToast } from '../context/ToastContext';
 
 export default function Signup() {
   const navigate = useNavigate();
