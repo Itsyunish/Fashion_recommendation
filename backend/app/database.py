@@ -21,6 +21,18 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+async def ensure_keras_table(dim: int) -> None:
+    """Create keras_fine_tune_embeddings table with the given vector dimension."""
+    async with engine.begin() as conn:
+        await conn.execute(text(f"""
+            CREATE TABLE IF NOT EXISTS keras_fine_tune_embeddings (
+                id SERIAL PRIMARY KEY,
+                image_path TEXT NOT NULL,
+                embedding vector({dim})
+            )
+        """))
+
+
 async def init_db() -> None:
     """Create all tables and enable the pgvector extension."""
     async with engine.begin() as conn:

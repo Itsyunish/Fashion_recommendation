@@ -6,18 +6,19 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.config import settings
+from app.database import ensure_keras_table, get_db
 from app.models import FineTuneEmbedding
 from app.schemas import CompareResponse, FineTuneCompareItem, RecommendResponse, RecommendationOut
 from app.services.feature_extractor import extract_features
-from app.services.fine_tune_extractor import extract_fine_tune_features
+from app.services.fine_tune_extractor import extract_fine_tune_features, get_keras_output_dim
 from app.services.image_repo import (
     find_fine_tune_csv,
     get_fine_tune_embedding_count,
     get_style_by_image_path,
     seed_fine_tune_from_csv,
 )
-from app.services.similarity import find_similar, find_similar_fine_tune
+from app.services.similarity import find_similar, find_similar_fine_tune, find_similar_keras_fine_tune
 
 router = APIRouter(tags=["fine_tune"])
 
@@ -38,8 +39,12 @@ async def fine_tune_recommend(
     content = await file.read()
     query_vec = extract_fine_tune_features(content)
     if query_vec is None:
-        raise HTTPException(503, "fine-tuned model is not available (PyTorch or model file missing)")
-    results = await find_similar_fine_tune(db, query_vec, top_k=top_k)
+        raise HTTPException(503, "fine-tuned model is not available (model file missing)")
+
+    if settings.USE_KERAS:
+        results = await find_similar_keras_fine_tune(db, query_vec, top_k=top_k)
+    else:
+        results = await find_similar_fine_tune(db, query_vec, top_k=top_k)
 
     return RecommendResponse(
         query_image=file.filename or "image.jpg",
@@ -73,7 +78,14 @@ async def fine_tune_seed_embeddings(
     if csv_path is None:
         raise HTTPException(404, "fine-tune embeddings CSV not found on server")
 
-    await db.execute(text("DELETE FROM fine_tune_embeddings"))
+    if settings.USE_KERAS:
+        dim = get_keras_output_dim()
+        if dim is None:
+            raise HTTPException(503, "Keras model not loaded; cannot determine embedding dimension")
+        await ensure_keras_table(dim)
+        await db.execute(text("DELETE FROM keras_fine_tune_embeddings"))
+    else:
+        await db.execute(text("DELETE FROM fine_tune_embeddings"))
     await db.commit()
 
     total = await seed_fine_tune_from_csv(db, str(csv_path))
@@ -100,8 +112,20 @@ async def add_fine_tune_embedding(
 
     vec = extract_fine_tune_features(content)
     if vec is None:
-        raise HTTPException(503, "fine-tuned model is not available (PyTorch or model file missing)")
-    db.add(FineTuneEmbedding(image_path=str(save_path), embedding=vec.tolist()))
+        raise HTTPException(503, "fine-tuned model is not available (model file missing)")
+
+    vec_literal = "[" + ",".join(str(v) for v in vec.tolist()) + "]"
+    if settings.USE_KERAS:
+        dim = get_keras_output_dim()
+        if dim is None:
+            raise HTTPException(503, "Keras model not loaded")
+        await ensure_keras_table(dim)
+        await db.execute(text(f"""
+            INSERT INTO keras_fine_tune_embeddings (image_path, embedding)
+            VALUES (:path, '{vec_literal}'::vector)
+        """), {"path": str(save_path)})
+    else:
+        db.add(FineTuneEmbedding(image_path=str(save_path), embedding=vec.tolist()))
     await db.commit()
 
     return {"message": "Fine-tune embedding saved", "image_path": f"/images/{filename}"}
@@ -125,8 +149,12 @@ async def fine_tune_compare(
 
     ft_vec = extract_fine_tune_features(content)
     if ft_vec is None:
-        raise HTTPException(503, "fine-tuned model is not available (PyTorch or model file missing)")
-    ft_results = await find_similar_fine_tune(db, ft_vec, top_k=top_k)
+        raise HTTPException(503, "fine-tuned model is not available (model file missing)")
+
+    if settings.USE_KERAS:
+        ft_results = await find_similar_keras_fine_tune(db, ft_vec, top_k=top_k)
+    else:
+        ft_results = await find_similar_fine_tune(db, ft_vec, top_k=top_k)
 
     def _to_item(path: str, score: float, model_type: str) -> FineTuneCompareItem:
         style = get_style_by_image_path(path) or {}
