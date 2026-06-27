@@ -184,3 +184,8 @@ async def seed_fine_tune_from_csv(db: AsyncSession, csv_path: str) -> int:
                 await db.flush()
         await db.commit()
     return total
+
+
+def load_style_csv() -> dict[str, dict]:
+    """Load styles.csv once and cache it in memory."""
+    return _load_styles()
