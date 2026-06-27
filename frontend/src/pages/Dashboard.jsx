@@ -4,6 +4,7 @@ import { API_BASE_URL } from '../config';
 import { useApp } from '../context/AppContext';
 import Navbar from '../components/Navbar';
 import HomePage from './HomePage';
+import BrowsePage from './BrowsePage';
 import FineTunePage from './FineTunePage';
 import AboutPage from './AboutPage';
 import SettingsPage from './SettingsPage';
@@ -50,6 +51,9 @@ export default function Dashboard() {
       <Navbar currentTab={currentTab} onTabChange={setCurrentTab} />
       <div style={{ display: currentTab === 'home' ? 'block' : 'none' }}>
         <HomePage key="home" />
+      </div>
+      <div style={{ display: currentTab === 'browse' ? 'block' : 'none' }}>
+        <BrowsePage key="browse" />
       </div>
       <div style={{ display: currentTab === 'fine-tune' ? 'block' : 'none' }}>
         <FineTunePage key="fine-tune" />

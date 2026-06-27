@@ -28,16 +28,12 @@ function CompareCol({ rec }) {
       <table className="modal-table">
         <tbody>
           <Section label="Details" />
-          <Row label="Similarity" val={(rec.similarity_score * 100).toFixed(1) + '%'} />
           <Row label="Brand" val={rec.brand_name} />
-          <Row label="Price" val={rec.discounted_price ? '\u20B9' + Number(rec.discounted_price).toLocaleString() : null} />
           <Row label="Gender" val={rec.gender} />
           <Row label="Category" val={rec.master_category} />
-          <Row label="Type" val={rec.article_type} />
           <Row label="Colour" val={rec.base_colour} />
-          <Row label="Season" val={rec.season} />
           <Row label="Usage" val={rec.usage} />
-          <Row label="Rating" val={rec.rating ? '\u2605 ' + rec.rating : null} />
+          <Row label="Rating" val={rec.rating || null} />
           {Object.keys(attrs).length > 0 && <Section label="Attributes" />}
           {Object.entries(attrs).map(([k, v]) => (
             <Row key={k} label={k.replace(/_/g, ' ')} val={v} />

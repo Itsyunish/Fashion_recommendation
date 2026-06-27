@@ -188,14 +188,12 @@ export default function FineTunePage() {
                   <div className="compare-side-col">
                     <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>Base Model</h3>
                     {compareData.base.map((rec, i) => {
-                      const score = (rec.similarity_score * 100).toFixed(1);
                       return (
                         <div className="compare-side-card" key={i}>
                           <div className="compare-side-img">
                             <img src={API_BASE_URL + rec.image_path} alt="" loading="lazy" />
                           </div>
                           <div className="compare-side-info">
-                            <div className="compare-side-score">{score}%</div>
                             {rec.product_display_name && (
                               <div className="compare-side-name">{rec.product_display_name}</div>
                             )}
@@ -207,14 +205,12 @@ export default function FineTunePage() {
                   <div className="compare-side-col">
                     <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>Fine-Tuned Model</h3>
                     {compareData.fineTune.map((rec, i) => {
-                      const score = (rec.similarity_score * 100).toFixed(1);
                       return (
                         <div className="compare-side-card" key={i}>
                           <div className="compare-side-img">
                             <img src={API_BASE_URL + rec.image_path} alt="" loading="lazy" />
                           </div>
                           <div className="compare-side-info">
-                            <div className="compare-side-score">{score}%</div>
                             {rec.product_display_name && (
                               <div className="compare-side-name">{rec.product_display_name}</div>
                             )}
