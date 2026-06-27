@@ -2,6 +2,22 @@
 from pydantic import BaseModel, EmailStr, field_validator
 
 
+class StoreOut(BaseModel):
+    """A physical store that carries a recommended product."""
+
+    id: int
+    name: str
+    address: str
+    city: str
+    latitude: float
+    longitude: float
+    map_url: str | None = None
+    phone: str | None = None
+    website: str | None = None
+    store_type: str | None = None
+    opening_hours: dict | None = None
+
+
 class RecommendationOut(BaseModel):
     """A single recommended item with its image path, score, and optional metadata."""
 
@@ -21,6 +37,7 @@ class RecommendationOut(BaseModel):
     usage: str | None = None
     year: str | None = None
     article_attributes: dict | None = None
+    stores: list[StoreOut] | None = None
 
 
 class RecommendResponse(BaseModel):
@@ -130,6 +147,7 @@ class FineTuneCompareItem(BaseModel):
     usage: str | None = None
     year: str | None = None
     article_attributes: dict | None = None
+    stores: list[StoreOut] | None = None
 
 
 class CompareResponse(BaseModel):
@@ -138,3 +156,9 @@ class CompareResponse(BaseModel):
     query_image: str
     base_recommendations: list[FineTuneCompareItem]
     fine_tune_recommendations: list[FineTuneCompareItem]
+
+
+class StoreListResponse(BaseModel):
+    """Response listing all stores."""
+
+    stores: list[StoreOut]
