@@ -19,8 +19,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import FileResponse
 
 from app.config import settings
-from app.database import init_db
+from app.database import async_session, init_db
 from app.services.feature_extractor import get_model
+from app.services.store_repo import seed_inventory, seed_stores
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
                 "Fine-tuned model not available. "
                 "Fine-tune endpoints will return errors until the model file is available."
             )
+    try:
+        async with async_session() as session:
+            await seed_stores(session)
+            await seed_inventory(session)
+    except Exception:
+        logger.warning("Could not seed store data (tables may not exist yet). Run POST /api/stores/seed manually.")
     yield
 
 
@@ -64,11 +71,13 @@ app.add_middleware(
 
 # ── Router includes ─────────────────────────────────────────────────────
 
-from app.routes import auth, recommend, config
+from app.routes import auth, browse, config, recommend, stores
 
 app.include_router(auth.router)
+app.include_router(browse.router)
 app.include_router(recommend.router)
 app.include_router(config.router)
+app.include_router(stores.router)
 
 if settings.ENABLE_FINE_TUNE:
     from app.routes import fine_tune
@@ -92,10 +101,14 @@ _images_candidates = [
     _project_root / "data_2" / "archive (1)" / "fashion-dataset" / "images",  # local dev
     _project_root / "backend" / "static" / "images",                    # local dev fallback
 ]
-images_dir = next((d for d in _images_candidates if d.is_dir()), None)
+images_dir = next((d for d in _images_candidates if d.is_dir() and any(d.iterdir())), None)
 if images_dir is not None:
     app.mount("/images", _CORSStaticFiles(directory=str(images_dir)), name="images")
 
-frontend_dir = _project_root / "frontend"
+frontend_dir = _project_root / "frontend" / "dist"
 if frontend_dir.is_dir():
     app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+else:
+    frontend_dir = _project_root / "frontend"
+    if frontend_dir.is_dir():
+        app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")

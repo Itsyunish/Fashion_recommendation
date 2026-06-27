@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import ensure_keras_table, get_db
 from app.models import FineTuneEmbedding
-from app.schemas import CompareResponse, FineTuneCompareItem, RecommendResponse, RecommendationOut
+from app.schemas import CompareResponse, FineTuneCompareItem, RecommendResponse, RecommendationOut, StoreOut
 from app.services.feature_extractor import extract_features
 from app.services.fine_tune_extractor import extract_fine_tune_features, get_keras_output_dim
 from app.services.image_repo import (
@@ -19,6 +19,7 @@ from app.services.image_repo import (
     seed_fine_tune_from_csv,
 )
 from app.services.similarity import find_similar, find_similar_fine_tune, find_similar_keras_fine_tune
+from app.services.store_repo import get_stores_for_product
 
 router = APIRouter(tags=["fine_tune"])
 
@@ -46,16 +47,23 @@ async def fine_tune_recommend(
     else:
         results = await find_similar_fine_tune(db, query_vec, top_k=top_k)
 
-    return RecommendResponse(
-        query_image=file.filename or "image.jpg",
-        recommendations=[
+    recommendations = []
+    for path, score in results:
+        product_id = int(Path(path).stem)
+        style = get_style_by_image_path(path) or {}
+        stores = await get_stores_for_product(db, product_id)
+        recommendations.append(
             RecommendationOut(
                 image_path=f"/images/{Path(path).name}",
                 similarity_score=score,
-                **(get_style_by_image_path(path) or {}),
+                **style,
+                stores=[StoreOut(**s) for s in stores] if stores else None,
             )
-            for path, score in results
-        ],
+        )
+
+    return RecommendResponse(
+        query_image=file.filename or "image.jpg",
+        recommendations=recommendations,
     )
 
 
@@ -156,17 +164,23 @@ async def fine_tune_compare(
     else:
         ft_results = await find_similar_fine_tune(db, ft_vec, top_k=top_k)
 
-    def _to_item(path: str, score: float, model_type: str) -> FineTuneCompareItem:
+    async def _to_item(path: str, score: float, model_type: str) -> FineTuneCompareItem:
+        product_id = int(Path(path).stem)
         style = get_style_by_image_path(path) or {}
+        stores = await get_stores_for_product(db, product_id)
         return FineTuneCompareItem(
             model_type=model_type,
             image_path=f"/images/{Path(path).name}",
             similarity_score=score,
             **style,
+            stores=[StoreOut(**s) for s in stores] if stores else None,
         )
+
+    base_items = [await _to_item(p, s, "base") for p, s in base_results]
+    ft_items = [await _to_item(p, s, "fine_tune") for p, s in ft_results]
 
     return CompareResponse(
         query_image=file.filename or "image.jpg",
-        base_recommendations=[_to_item(p, s, "base") for p, s in base_results],
-        fine_tune_recommendations=[_to_item(p, s, "fine_tune") for p, s in ft_results],
+        base_recommendations=base_items,
+        fine_tune_recommendations=ft_items,
     )
