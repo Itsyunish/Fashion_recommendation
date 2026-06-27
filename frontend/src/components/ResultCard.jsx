@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { API_BASE_URL } from '../config';
 import { useApp } from '../context/AppContext';
 
@@ -8,14 +9,12 @@ function valid(v) {
 export default function ResultCard({ rec, isCompareChecked, onToggleCompare, onFindSimilar, onOpenDetail }) {
   const { favorites, addFavorite, removeFavorite } = useApp();
   const filename = rec.image_path.split('/').pop();
-  const score = (rec.similarity_score * 100).toFixed(1);
-  const barWidth = Math.max(4, rec.similarity_score * 100);
   const isFav = favorites.has(rec.image_path);
+  const [showAllStores, setShowAllStores] = useState(false);
 
-  const attrs = rec.article_attributes || {};
-  const attrParts = ['fabric', 'sleeve_length', 'neck']
-    .map(k => attrs[k])
-    .filter(valid);
+  const stores = rec.stores || [];
+  const visibleStores = showAllStores ? stores : stores.slice(0, 2);
+  const hasMoreStores = stores.length > 2;
 
   const handleFavClick = (e) => {
     e.stopPropagation();
@@ -32,52 +31,48 @@ export default function ResultCard({ rec, isCompareChecked, onToggleCompare, onF
     onFindSimilar(rec.image_path);
   };
 
+  const handleMapClick = (e, mapUrl) => {
+    e.stopPropagation();
+    if (mapUrl) window.open(mapUrl, '_blank');
+  };
+
   return (
     <div className="result-card">
       <div className="card-img-wrap">
         <img src={API_BASE_URL + rec.image_path} alt="" loading="lazy" />
-        <button
-          className={`card-fav ${isFav ? 'active' : ''}`}
-          onClick={handleFavClick}
-        >
+        <button className={`card-fav ${isFav ? 'active' : ''}`} onClick={handleFavClick}>
           {isFav ? '\u2665' : '\u2661'}
         </button>
-        <input
-          type="checkbox"
-          className="card-compare-check"
-          checked={!!isCompareChecked}
-          onChange={handleCompareChange}
-        />
+        <input type="checkbox" className="card-compare-check" checked={!!isCompareChecked} onChange={handleCompareChange} />
         <button className="card-find-btn" onClick={handleFindSimilar}>
-          🔍 Find Similar
+          Find Similar
         </button>
       </div>
-      <div className="card-body" style={{ cursor: 'pointer' }} onClick={() => onOpenDetail(rec)}>
+      <div className="card-body" onClick={() => onOpenDetail(rec)}>
         {valid(rec.product_display_name)
           ? <div className="card-title" title={rec.product_display_name}>{rec.product_display_name}</div>
           : <div className="card-title">{filename}</div>
         }
-        {valid(rec.brand_name) && <div className="card-brand">{rec.brand_name}</div>}
-        <div className="card-price-row">
-          {valid(rec.discounted_price) && (
-            <span className="card-price">₹{Number(rec.discounted_price).toLocaleString()}</span>
-          )}
-          {rec.price && rec.discounted_price && rec.price !== rec.discounted_price && (
-            <span className="card-price-original">₹{Number(rec.price).toLocaleString()}</span>
-          )}
-          {valid(rec.rating) && <span className="card-rating">★ {rec.rating}</span>}
-        </div>
         <div className="card-details">
-          {valid(rec.gender) && <span className="card-tag">{rec.gender}</span>}
-          {valid(rec.usage) && <span className="card-tag">{rec.usage}</span>}
           {valid(rec.base_colour) && <span className="card-tag">{rec.base_colour}</span>}
-          {valid(rec.season) && <span className="card-tag">{rec.season}</span>}
+          {valid(rec.gender) && <span className="card-tag">{rec.gender}</span>}
         </div>
-        {attrParts.length > 0 && <div className="card-attr">{attrParts.join(' · ')}</div>}
-        <div className="card-score-wrap">
-          <div className="card-score-bar" style={{ width: `${barWidth}%` }}></div>
-        </div>
-        <div className="card-score">{score}% match</div>
+
+        {stores.length > 0 && (
+          <div className="card-stores">
+            {visibleStores.map((s, i) => (
+              <div key={s.id || i} className="card-store-item" onClick={(e) => handleMapClick(e, s.map_url)} title="Open in Maps">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {s.name}
+              </div>
+            ))}
+            {hasMoreStores && !showAllStores && (
+              <button className="card-stores-more" onClick={(e) => { e.stopPropagation(); setShowAllStores(true); }}>
+                +{stores.length - 2}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -85,8 +80,10 @@ export default function ResultCard({ rec, isCompareChecked, onToggleCompare, onF
 
 export function FineTuneResultCard({ rec }) {
   const filename = rec.image_path.split('/').pop();
-  const score = (rec.similarity_score * 100).toFixed(1);
-  const barWidth = Math.max(4, rec.similarity_score * 100);
+
+  const stores = rec.stores || [];
+  const visibleStores = stores.slice(0, 2);
+  const hasMoreStores = stores.length > 2;
 
   return (
     <div className="result-card">
@@ -99,10 +96,17 @@ export function FineTuneResultCard({ rec }) {
           : <div className="card-title">{filename}</div>
         }
         {rec.brand_name && <div className="card-brand">{rec.brand_name}</div>}
-        <div className="card-score-wrap">
-          <div className="card-score-bar" style={{ width: `${barWidth}%` }}></div>
-        </div>
-        <div className="card-score">{score}% match</div>
+
+        {stores.length > 0 && (
+          <div className="card-stores">
+            {visibleStores.map((s, i) => (
+              <div key={s.id || i} className="card-store-item">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {s.name}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

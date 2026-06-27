@@ -11,6 +11,8 @@ import CompareModal from '../components/CompareModal';
 import DetailModal from '../components/DetailModal';
 import LoadingOverlay from '../components/LoadingOverlay';
 
+
+
 export default function HomePage() {
   const showToast = useToast();
   const { favorites } = useApp();
@@ -26,6 +28,7 @@ export default function HomePage() {
   const [selectedCompareItems, setSelectedCompareItems] = useState([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [detailRec, setDetailRec] = useState(null);
+
 
   const [activeFilters, setActiveFilters] = useState({
     brands: new Set(), colours: new Set(), categories: new Set(), genders: new Set(),
@@ -62,7 +65,7 @@ export default function HomePage() {
     });
   }, []);
 
-  const handleRecommend = useCallback(async () => {
+  const handleRecommend = useCallback(async (targetCategory) => {
     if (!selectedFile) return;
 
     setLoading(true);
@@ -75,7 +78,8 @@ export default function HomePage() {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      const url = API_BASE_URL + `/api/recommend?top_k=${topK}`;
+      let url = API_BASE_URL + `/api/recommend?top_k=${topK}`;
+      if (targetCategory) url += `&target_category=${encodeURIComponent(targetCategory)}`;
       const res = await fetch(url, { method: 'POST', body: formData });
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
 
@@ -177,6 +181,13 @@ export default function HomePage() {
     <>
       {seeded === false && <SeedBanner type="base" />}
 
+      <div className="hero-section" style={{backgroundImage: 'url(/images/hero-bg.svg)'}}>
+        <div className="container">
+          <h1 className="hero-title">Discover Your Style</h1>
+          <p className="hero-sub">Upload a photo and find visually similar fashion items from our collection.</p>
+        </div>
+      </div>
+
       <div className="container home-layout">
         <aside className="query-panel">
           <div className="query-card">
@@ -198,7 +209,7 @@ export default function HomePage() {
             <DropZone onFileSelect={handleFileSelect} />
 
             {selectedFile && (
-              <button className="btn btn-primary btn-full" onClick={handleRecommend} disabled={loading} style={{ marginTop: '0.75rem' }}>
+              <button className="btn btn-primary btn-full" onClick={() => handleRecommend()} disabled={loading} style={{ marginTop: '0.75rem' }}>
                 {loading ? 'Analysing…' : 'Get Recommendations'}
               </button>
             )}
@@ -208,10 +219,27 @@ export default function HomePage() {
         <section className="results-panel">
           {!hasResults && !loading && (
             <div className="empty-state">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <p>Upload an image to see recommendations</p>
+              <div className="empty-state-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+              </div>
+              <h3>Discover Your Style</h3>
+              <p>Upload a photo of any outfit to find visually similar items from our catalog of <strong>{(totalImages || 44441).toLocaleString()}</strong> fashion products.</p>
+              <div className="empty-state-hints">
+                <div className="empty-hint">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <span>Drag & drop or click to browse</span>
+                </div>
+                <div className="empty-hint">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <span>AI searches 44K+ products</span>
+                </div>
+                <div className="empty-hint">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <span>Find stores near you</span>
+                </div>
+              </div>
             </div>
           )}
 
