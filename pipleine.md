@@ -29,7 +29,7 @@ This document describes the overall system and data pipeline for the project.
 ## Pipeline steps
 
 1. Data ingestion
-   - Collect product metadata (CSV) and image assets in `data/`.
+   - Collect product metadata (CSV) and image assets in `data/`. 
    - Normalize and deduplicate rows, validate image paths.
 
 2. Preprocessing
