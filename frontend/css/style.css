@@ -362,6 +362,8 @@ body {
   gap: 1rem;
 }
 
+/* (gallery styles removed) */
+
 .result-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
