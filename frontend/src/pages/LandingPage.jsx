@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import { useApp } from '../context/AppContext';
@@ -6,255 +6,305 @@ import { useApp } from '../context/AppContext';
 export default function LandingPage() {
   const navigate = useNavigate();
   const { setUser } = useApp();
-  const [authPanel, setAuthPanel] = useState(null); // null | 'login' | 'signup'
-  const [stats, setStats] = useState({ products: '44,000+', stores: 48 });
+  const [authMode, setAuthMode] = useState('login');
 
-  // Login form state
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPass, setLoginPass] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
-
-  // Signup form state
-  const [signupName, setSignupName] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
-  const [signupPass, setSignupPass] = useState('');
-  const [signupConfirm, setSignupConfirm] = useState('');
-  const [signupError, setSignupError] = useState('');
-  const [signupLoading, setSignupLoading] = useState(false);
-
-  useEffect(() => {
-    fetch(API_BASE_URL + '/api/seed/status')
-      .then(r => r.json())
-      .then(d => { if (d.count) setStats(prev => ({ ...prev, products: d.count.toLocaleString() + '+' })); })
-      .catch(() => {});
-  }, []);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetch(API_BASE_URL + '/api/auth/me', { credentials: 'include' })
-      .then(r => { if (r.ok) navigate('/dashboard'); })
+      .then(res => { if (res.ok) navigate('/dashboard'); })
       .catch(() => {});
   }, [navigate]);
 
+  const resetForm = () => {
+    setEmail('');
+    setPassword('');
+    setUsername('');
+    setConfirm('');
+    setError('');
+  };
+
+  const switchMode = (mode) => {
+    resetForm();
+    setAuthMode(mode);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoginError('');
-    setLoginLoading(true);
+    setError('');
+    setLoading(true);
     try {
       const res = await fetch(API_BASE_URL + '/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email: loginEmail.trim(), password: loginPass }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
       const data = await res.json();
-      if (!res.ok) { setLoginError(data.detail || 'Invalid email or password'); return; }
+      if (!res.ok) {
+        setError(data.detail || 'Invalid email or password');
+        return;
+      }
       setUser(data.user);
       navigate('/dashboard');
-    } catch { setLoginError('Unable to connect. Make sure the server is running.'); }
-    finally { setLoginLoading(false); }
+    } catch {
+      setError('Unable to connect. Make sure the server is running.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setSignupError('');
-    if (signupPass !== signupConfirm) { setSignupError('Passwords do not match'); return; }
-    setSignupLoading(true);
+    setError('');
+    setLoading(true);
+    if (password !== confirm) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch(API_BASE_URL + '/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ username: signupName.trim(), email: signupEmail.trim(), password: signupPass, confirm_password: signupConfirm }),
+        body: JSON.stringify({
+          username: username.trim(),
+          email: email.trim(),
+          password,
+          confirm_password: confirm,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
-        const msg = data.detail ? (Array.isArray(data.detail) ? data.detail[0].msg : data.detail) : 'Sign up failed';
-        setSignupError(msg); return;
+        const msg = data.detail
+          ? (Array.isArray(data.detail) ? data.detail[0].msg : data.detail)
+          : 'Sign up failed';
+        setError(msg);
+        return;
       }
       setUser(data.user);
       navigate('/dashboard');
-    } catch { setSignupError('Unable to connect. Make sure the server is running.'); }
-    finally { setSignupLoading(false); }
+    } catch {
+      setError('Unable to connect. Make sure the server is running.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="lp-root">
-      {/* ── Left: Marketing ──────────────────────────── */}
-      <div className="lp-left">
-        <nav className="lp-left-nav">
-          <div className="lp-left-brand">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <path d="m21 15-5-5L5 21"/>
-            </svg>
-            <span>Pixel<span className="lp-brand-accent">Closet</span></span>
+    <div className="landing">
+      <div className="landing-left">
+        <div className="landing-deco landing-deco-1" />
+        <div className="landing-deco landing-deco-2" />
+
+        <nav className="landing-nav">
+          <div className="landing-nav-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>PixelCloset</span>
           </div>
         </nav>
 
-        <div className="lp-left-content">
-          <div className="lp-hero-badge">AI-Powered Fashion Search</div>
-          <h1 className="lp-hero-title">
-            Find your next<br />
-            <span className="lp-hero-highlight">favourite outfit</span><br />
-            in seconds.
+        <div className="landing-hero">
+          <div className="landing-badge">AI-Powered Fashion Search</div>
+          <h1 className="landing-title">
+            Find Your<br />
+            <span className="landing-gradient-text">Perfect Match</span>
           </h1>
-          <p className="lp-hero-sub">
-            Upload a photo and discover visually similar items from thousands of products — then find them at stores near you.
+          <p className="landing-sub">
+            Upload any outfit photo and discover similar styles available at
+            stores near you. Our AI analyzes visual features to find the closest matches.
           </p>
 
-          <div className="lp-hero-stats">
-            <div className="lp-hero-stat">
-              <div className="lp-hero-stat-num">{stats.products}</div>
-              <div className="lp-hero-stat-label">Products</div>
+          <div className="landing-stats">
+            <div className="landing-stat">
+              <div className="landing-stat-num">44K+</div>
+              <div className="landing-stat-label">Products</div>
             </div>
-            <div className="lp-hero-stat">
-              <div className="lp-hero-stat-num">{stats.stores}</div>
-              <div className="lp-hero-stat-label">Stores</div>
+            <div className="landing-stat-divider" />
+            <div className="landing-stat">
+              <div className="landing-stat-num">45+</div>
+              <div className="landing-stat-label">Stores</div>
             </div>
-            <div className="lp-hero-stat">
-              <div className="lp-hero-stat-num">&lt;1s</div>
-              <div className="lp-hero-stat-label">Search</div>
+            <div className="landing-stat-divider" />
+            <div className="landing-stat">
+              <div className="landing-stat-num">9</div>
+              <div className="landing-stat-label">Categories</div>
             </div>
           </div>
 
-          <div className="lp-hero-trust">
-            <div className="lp-trust-item">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-              Visual Search
+          <div className="landing-features">
+            <div className="landing-feature-card">
+              <div className="landing-feature-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <div>
+                <div className="landing-feature-title">Visual Search</div>
+                <div className="landing-feature-desc">Upload a photo, find similar items instantly</div>
+              </div>
             </div>
-            <div className="lp-trust-item">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              Smart Matching
+            <div className="landing-feature-card">
+              <div className="landing-feature-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+              </div>
+              <div>
+                <div className="landing-feature-title">Smart Matching</div>
+                <div className="landing-feature-desc">AI analyzes color, style, and pattern</div>
+              </div>
             </div>
-            <div className="lp-trust-item">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              Store Finder
+            <div className="landing-feature-card">
+              <div className="landing-feature-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div>
+                <div className="landing-feature-title">Store Finder</div>
+                <div className="landing-feature-desc">Locate nearby stores with website links</div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="lp-left-footer">
-          &copy; 2025 PixelCloset. AI-powered fashion discovery.
+        <div className="landing-left-footer">
+          PixelCloset &copy; {new Date().getFullYear()}
         </div>
       </div>
 
-      {/* ── Right: Auth Panel ─────────────────────────── */}
-      <div className="lp-right">
-        {authPanel === null && (
-          <div className="lp-right-default">
-            <div className="lp-right-preview">
-              <div className="lp-preview-img">
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" opacity="0.35">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <path d="m21 15-5-5L5 21"/>
-                </svg>
+      <div className="landing-right">
+        <div className="landing-auth-card">
+          <div className="landing-right-brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>PixelCloset</span>
+          </div>
+
+          <div className="landing-auth-tabs">
+            <button
+              className={`landing-tab ${authMode === 'login' ? 'active' : ''}`}
+              onClick={() => switchMode('login')}
+            >
+              Sign In
+            </button>
+            <button
+              className={`landing-tab ${authMode === 'signup' ? 'active' : ''}`}
+              onClick={() => switchMode('signup')}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          {authMode === 'login' ? (
+            <div className="landing-auth-body">
+              <div className="landing-auth-header">
+                <h2>Welcome back</h2>
+                <p>Sign in to your account</p>
               </div>
-              <div className="lp-preview-body">
-                <div className="lp-preview-line lp-line-lg"></div>
-                <div className="lp-preview-line lp-line-sm"></div>
-                <div className="lp-preview-tags">
-                  <span className="lp-preview-tag"></span>
-                  <span className="lp-preview-tag"></span>
-                  <span className="lp-preview-tag"></span>
+              <form className="auth-form" onSubmit={handleLogin}>
+                <div className="form-group">
+                  <label htmlFor="loginEmail">Email</label>
+                  <input
+                    id="loginEmail"
+                    type="email"
+                    placeholder="you@example.com"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
-                <div className="lp-preview-stores">
-                  <div className="lp-preview-store"></div>
-                  <div className="lp-preview-store"></div>
+                <div className="form-group">
+                  <label htmlFor="loginPassword">Password</label>
+                  <input
+                    id="loginPassword"
+                    type="password"
+                    placeholder="Enter your password"
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
                 </div>
-              </div>
+                {error && <div className="form-error">{error}</div>}
+                <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </button>
+              </form>
+              <p className="auth-footer-text">
+                Don't have an account?{' '}
+                <button className="link-btn" onClick={() => switchMode('signup')}>Create one</button>
+              </p>
             </div>
-
-            <div className="lp-right-actions">
-              <button className="lp-panel-btn lp-panel-btn-primary" onClick={() => setAuthPanel('login')}>
-                Log In
-              </button>
-              <button className="lp-panel-btn lp-panel-btn-outline" onClick={() => setAuthPanel('signup')}>
-                Create Account
-              </button>
+          ) : (
+            <div className="landing-auth-body">
+              <div className="landing-auth-header">
+                <h2>Create account</h2>
+                <p>Get started with PixelCloset</p>
+              </div>
+              <form className="auth-form" onSubmit={handleSignup}>
+                <div className="form-group">
+                  <label htmlFor="signupUsername">Username</label>
+                  <input
+                    id="signupUsername"
+                    type="text"
+                    placeholder="Choose a username"
+                    required
+                    autoComplete="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="signupEmail">Email</label>
+                  <input
+                    id="signupEmail"
+                    type="email"
+                    placeholder="you@example.com"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="signupPassword">Password</label>
+                  <input
+                    id="signupPassword"
+                    type="password"
+                    placeholder="At least 6 characters"
+                    required
+                    autoComplete="new-password"
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="signupConfirm">Confirm password</label>
+                  <input
+                    id="signupConfirm"
+                    type="password"
+                    placeholder="Repeat your password"
+                    required
+                    autoComplete="new-password"
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                  />
+                </div>
+                {error && <div className="form-error">{error}</div>}
+                <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+                  {loading ? 'Creating account...' : 'Create Account'}
+                </button>
+              </form>
+              <p className="auth-footer-text">
+                Already have an account?{' '}
+                <button className="link-btn" onClick={() => switchMode('login')}>Sign in</button>
+              </p>
             </div>
-          </div>
-        )}
-
-        {authPanel === 'login' && (
-          <div className="lp-auth-form-wrap">
-            <div className="lp-auth-top">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <path d="m21 15-5-5L5 21"/>
-              </svg>
-              <span className="lp-auth-logo-text">Pixel<span>Closet</span></span>
-            </div>
-            <h2>Welcome back</h2>
-            <p className="lp-auth-sub">Sign in to your account</p>
-
-            <form className="lp-auth-form" onSubmit={handleLogin}>
-              <div className="lp-form-group">
-                <label>Email address</label>
-                <input type="email" placeholder="you@example.com" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
-              </div>
-              <div className="lp-form-group">
-                <label>Password</label>
-                <input type="password" placeholder="Enter your password" required value={loginPass} onChange={e => setLoginPass(e.target.value)} />
-              </div>
-              {loginError && <div className="lp-form-error">{loginError}</div>}
-              <button type="submit" className="lp-panel-btn lp-panel-btn-primary lp-full" disabled={loginLoading}>
-                {loginLoading ? 'Signing in...' : 'Sign In'}
-              </button>
-            </form>
-
-            <p className="lp-auth-switch">
-              Don't have an account?{' '}
-              <button className="lp-switch-btn" onClick={() => { setLoginError(''); setAuthPanel('signup'); }}>Create one</button>
-            </p>
-          </div>
-        )}
-
-        {authPanel === 'signup' && (
-          <div className="lp-auth-form-wrap">
-            <div className="lp-auth-top">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <path d="m21 15-5-5L5 21"/>
-              </svg>
-              <span className="lp-auth-logo-text">Pixel<span>Closet</span></span>
-            </div>
-            <h2>Create an account</h2>
-            <p className="lp-auth-sub">Get started with PixelCloset</p>
-
-            <form className="lp-auth-form" onSubmit={handleSignup}>
-              <div className="lp-form-group">
-                <label>Username</label>
-                <input type="text" placeholder="Choose a username" required value={signupName} onChange={e => setSignupName(e.target.value)} />
-              </div>
-              <div className="lp-form-group">
-                <label>Email address</label>
-                <input type="email" placeholder="you@example.com" required value={signupEmail} onChange={e => setSignupEmail(e.target.value)} />
-              </div>
-              <div className="lp-form-group">
-                <label>Password</label>
-                <input type="password" placeholder="At least 6 characters" required minLength={6} value={signupPass} onChange={e => setSignupPass(e.target.value)} />
-              </div>
-              <div className="lp-form-group">
-                <label>Confirm password</label>
-                <input type="password" placeholder="Repeat your password" required value={signupConfirm} onChange={e => setSignupConfirm(e.target.value)} />
-              </div>
-              {signupError && <div className="lp-form-error">{signupError}</div>}
-              <button type="submit" className="lp-panel-btn lp-panel-btn-primary lp-full" disabled={signupLoading}>
-                {signupLoading ? 'Creating account...' : 'Create Account'}
-              </button>
-            </form>
-
-            <p className="lp-auth-switch">
-              Already have an account?{' '}
-              <button className="lp-switch-btn" onClick={() => { setSignupError(''); setAuthPanel('login'); }}>Sign in</button>
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
