@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { useApp } from '../context/AppContext';
 import { API_BASE_URL } from '../config';
 
 export default function Navbar({ currentTab, onTabChange }) {
-  const { enableFineTune } = useApp();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -16,8 +14,7 @@ export default function Navbar({ currentTab, onTabChange }) {
 
   const tabs = [
     { id: 'home', label: 'Home' },
-    { id: 'browse', label: 'Browse', hidden: false },
-    { id: 'fine-tune', label: 'Fine Tune', hidden: !enableFineTune },
+    { id: 'browse', label: 'Browse' },
     { id: 'about', label: 'About' },
     { id: 'settings', label: 'Settings' },
   ];

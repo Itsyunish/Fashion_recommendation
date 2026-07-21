@@ -21,6 +21,7 @@ export default function HomePage() {
   const [topK, setTopK] = useState(5);
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [dropZoneKey, setDropZoneKey] = useState(0);
   const [seeded, setSeeded] = useState(null);
 
   const [lastRecs, setLastRecs] = useState([]);
@@ -206,12 +207,25 @@ export default function HomePage() {
               />
             </div>
 
-            <DropZone onFileSelect={handleFileSelect} />
+            <DropZone key={dropZoneKey} onFileSelect={handleFileSelect} />
 
             {selectedFile && (
-              <button className="btn btn-primary btn-full" onClick={() => handleRecommend()} disabled={loading} style={{ marginTop: '0.75rem' }}>
-                {loading ? 'Analysing…' : 'Get Recommendations'}
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => handleRecommend()} disabled={loading}>
+                  {loading ? 'Analysing…' : 'Get Recommendations'}
+                </button>
+                <button
+                  className="btn"
+                  style={{ background: 'var(--border)', color: 'var(--text)', flex: 1 }}
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setDropZoneKey(k => k + 1);
+                  }}
+                  disabled={loading}
+                >
+                  Reupload
+                </button>
+              </div>
             )}
           </div>
         </aside>
