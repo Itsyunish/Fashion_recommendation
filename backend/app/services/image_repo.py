@@ -189,3 +189,9 @@ async def seed_fine_tune_from_csv(db: AsyncSession, csv_path: str) -> int:
 def load_style_csv() -> dict[str, dict]:
     """Load styles.csv once and cache it in memory."""
     return _load_styles()
+
+
+def find_images_by_category(category: str) -> list[str]:
+    """Return image ids that belong to a given master category."""
+    return [i for i, s in _load_styles().items()
+            if s.get("master_category") == category]
