@@ -9,8 +9,8 @@ class StoreOut(BaseModel):
     name: str
     address: str
     city: str
-    latitude: float
-    longitude: float
+    latitude: float | None = None
+    longitude: float | None = None
     map_url: str | None = None
     phone: str | None = None
     website: str | None = None
