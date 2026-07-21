@@ -61,9 +61,16 @@ export default function ResultCard({ rec, isCompareChecked, onToggleCompare, onF
         {stores.length > 0 && (
           <div className="card-stores">
             {visibleStores.map((s, i) => (
-              <div key={s.id || i} className="card-store-item" onClick={(e) => handleMapClick(e, s.map_url)} title="Open in Maps">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {s.name}
+              <div key={s.id || i} className="card-store-item">
+                <span className="card-store-map" onClick={(e) => handleMapClick(e, s.map_url)} title="Open in Maps">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {s.name}
+                </span>
+                {s.website && (
+                  <a className="card-store-website" href={s.website} target="_blank" rel="noopener noreferrer" title="Visit website" onClick={(e) => e.stopPropagation()}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  </a>
+                )}
               </div>
             ))}
             {hasMoreStores && !showAllStores && (
@@ -85,6 +92,11 @@ export function FineTuneResultCard({ rec }) {
   const visibleStores = stores.slice(0, 2);
   const hasMoreStores = stores.length > 2;
 
+  const handleMapClick = (e, mapUrl) => {
+    e.stopPropagation();
+    if (mapUrl) window.open(mapUrl, '_blank');
+  };
+
   return (
     <div className="result-card">
       <div className="card-img-wrap">
@@ -101,8 +113,15 @@ export function FineTuneResultCard({ rec }) {
           <div className="card-stores">
             {visibleStores.map((s, i) => (
               <div key={s.id || i} className="card-store-item">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {s.name}
+                <span className="card-store-map" onClick={(e) => handleMapClick(e, s.map_url)} title="Open in Maps">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {s.name}
+                </span>
+                {s.website && (
+                  <a className="card-store-website" href={s.website} target="_blank" rel="noopener noreferrer" title="Visit website" onClick={(e) => e.stopPropagation()}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  </a>
+                )}
               </div>
             ))}
           </div>
