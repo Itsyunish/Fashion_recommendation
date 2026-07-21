@@ -41,6 +41,15 @@ def _get_inventory_csv_path() -> Path | None:
     return None
 
 
+def _safe_float(val: str | None) -> float | None:
+    if not val or not val.strip():
+        return None
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return None
+
+
 async def seed_stores(db: AsyncSession) -> int:
     csv_path = _get_store_csv_path()
     if csv_path is None:
@@ -55,18 +64,24 @@ async def seed_stores(db: AsyncSession) -> int:
         reader = csv.DictReader(f)
         for row in reader:
             hours_raw = row.get("opening_hours") or None
-            hours = json.loads(hours_raw) if hours_raw else None
+            hours = None
+            if hours_raw:
+                try:
+                    hours = json.loads(hours_raw)
+                except (json.JSONDecodeError, TypeError):
+                    hours = None
             db.add(Store(
                 name=row["name"],
                 address=row["address"],
                 city=row["city"],
-                latitude=float(row["latitude"]),
-                longitude=float(row["longitude"]),
+                latitude=_safe_float(row.get("latitude")),
+                longitude=_safe_float(row.get("longitude")),
                 phone=row.get("phone") or None,
                 website=row.get("website") or None,
                 store_type=row.get("store_type") or None,
                 opening_hours=hours,
                 map_url=row.get("map_url") or None,
+                categories=row.get("categories") or None,
             ))
             count += 1
         await db.commit()
@@ -97,53 +112,51 @@ async def seed_inventory(db: AsyncSession) -> int:
     return count
 
 
-async def get_stores_for_product(db: AsyncSession, product_id: int) -> list[dict]:
+def _store_to_dict(s: Store) -> dict:
+    map_url = s.map_url
+    if not map_url and s.latitude and s.longitude:
+        map_url = f"https://www.google.com/maps?q={s.latitude},{s.longitude}"
+    return {
+        "id": s.id,
+        "name": s.name,
+        "address": s.address,
+        "city": s.city,
+        "latitude": s.latitude,
+        "longitude": s.longitude,
+        "map_url": map_url,
+        "phone": s.phone,
+        "website": s.website,
+        "store_type": s.store_type,
+        "opening_hours": s.opening_hours,
+        "categories": s.categories,
+    }
+
+
+async def get_stores_for_product(db: AsyncSession, product_id: int, article_type: str | None = None) -> list[dict]:
     result = await db.execute(
         select(Store).join(StoreInventory, Store.id == StoreInventory.store_id)
         .where(StoreInventory.product_id == product_id)
     )
-    stores = result.scalars().all()
-    return [
-        {
-            "id": s.id,
-            "name": s.name,
-            "address": s.address,
-            "city": s.city,
-            "latitude": s.latitude,
-            "longitude": s.longitude,
-            "map_url": s.map_url or f"https://www.google.com/maps?q={s.latitude},{s.longitude}",
-            "phone": s.phone,
-            "website": s.website,
-            "store_type": s.store_type,
-            "opening_hours": s.opening_hours,
-        }
-        for s in stores
-    ]
+    stores = {s.id: _store_to_dict(s) for s in result.scalars().all()}
+
+    if article_type:
+        cat_result = await db.execute(select(Store))
+        for s in cat_result.scalars().all():
+            if s.id in stores:
+                continue
+            if s.categories:
+                cat_list = [c.strip() for c in s.categories.split(",")]
+                if article_type.strip() in cat_list:
+                    stores[s.id] = _store_to_dict(s)
+
+    return list(stores.values())
 
 
 async def get_all_stores(db: AsyncSession) -> list[dict]:
     result = await db.execute(select(Store).order_by(Store.name))
-    stores = result.scalars().all()
-    return [
-        {
-            "id": s.id,
-            "name": s.name,
-            "address": s.address,
-            "city": s.city,
-            "latitude": s.latitude,
-            "longitude": s.longitude,
-            "map_url": s.map_url or f"https://www.google.com/maps?q={s.latitude},{s.longitude}",
-            "phone": s.phone,
-            "website": s.website,
-            "store_type": s.store_type,
-            "opening_hours": s.opening_hours,
-        }
-        for s in stores
-    ]
+    return [_store_to_dict(s) for s in result.scalars().all()]
 
 
 async def get_store_count(db: AsyncSession) -> int:
     count = await db.scalar(select(func.count(Store.id)))
     return count or 0
-
-

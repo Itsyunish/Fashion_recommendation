@@ -54,7 +54,7 @@ async def recommend(
             sub = (style.get("sub_category") or "").strip().lower()
             if sub != target_category.strip().lower():
                 continue
-        stores = await get_stores_for_product(db, product_id)
+        stores = await get_stores_for_product(db, product_id, article_type=style.get("article_type"))
         recommendations.append(
             RecommendationOut(
                 image_path=f"/images/{Path(path).name}",
