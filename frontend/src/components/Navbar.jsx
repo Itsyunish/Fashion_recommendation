@@ -6,10 +6,12 @@ export default function Navbar({ currentTab, onTabChange }) {
 
   const handleLogout = async () => {
     try {
-      await fetch(API_BASE_URL + '/api/auth/logout', { method: 'POST', credentials: 'include' });
+      await fetch(API_BASE_URL + '/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
     } catch {}
-    window.location.hash = '/';
-    window.location.reload();
+    window.location.href = '/';
   };
 
   const tabs = [

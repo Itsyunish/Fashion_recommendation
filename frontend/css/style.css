@@ -314,6 +314,22 @@ body {
   background: var(--primary-hover);
 }
 
+.btn-lg {
+  padding: 0.8rem 1.5rem;
+  font-size: 0.95rem;
+  border-radius: 10px;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: var(--primary-light);
+}
+
 /* ── Results panel ─────────────────────────────────────────────── */
 .results-panel {
   background: var(--bg-card);
@@ -1192,56 +1208,385 @@ body {
   .compare-bar { flex-direction: column; gap: 0.4rem; }
 }
 
-/* ── Auth Pages ────────────────────────────────────────── */
-.auth-body {
+/* ── Landing Page ────────────────────────────────────────── */
+.landing {
+  display: flex;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Left Panel ─────────────────────────────────────────── */
+.landing-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 3rem;
+  background: linear-gradient(160deg, #0c1524 0%, #162d50 40%, #0ea5e9 100%);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-deco {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.08;
+  background: #fff;
+  pointer-events: none;
+}
+
+.landing-deco-1 {
+  width: 500px;
+  height: 500px;
+  top: -150px;
+  right: -100px;
+}
+
+.landing-deco-2 {
+  width: 300px;
+  height: 300px;
+  bottom: -80px;
+  left: -60px;
+}
+
+.landing-nav {
+  position: absolute;
+  top: 2rem;
+  left: 3rem;
+  z-index: 1;
+}
+
+.landing-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.landing-nav-brand svg {
+  opacity: 0.9;
+}
+
+.landing-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+}
+
+.landing-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1.5rem;
+  width: fit-content;
+  backdrop-filter: blur(8px);
+}
+
+.landing-title {
+  font-size: 3.2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  margin-bottom: 1.25rem;
+}
+
+.landing-gradient-text {
+  background: linear-gradient(135deg, #67e8f9 0%, #a5f3fc 50%, #fff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.landing-sub {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 2rem;
+  max-width: 440px;
+}
+
+.landing-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+}
+
+.landing-stat-num {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.landing-stat-label {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.landing-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.landing-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.landing-feature-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+
+.landing-feature-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.landing-feature-icon {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  flex-shrink: 0;
+  color: #67e8f9;
+}
+
+.landing-feature-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.1rem;
+}
+
+.landing-feature-desc {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.landing-left-footer {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 3rem;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Right Panel ────────────────────────────────────────── */
+.landing-right {
+  width: 480px;
   min-height: 100vh;
-  padding: 1rem;
-  background: linear-gradient(135deg, #f4f5f7 0%, #e8ecf4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem;
+  background: linear-gradient(170deg, #0f1a2e 0%, #111d33 50%, #0d2137 100%);
 }
 
-.auth-container {
+.landing-auth-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 380px;
 }
 
-.auth-card {
-  background: var(--bg-card);
-  border-radius: 16px;
-  padding: 2.5rem 2.25rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-
-.auth-header {
-  text-align: center;
+.landing-right-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
   margin-bottom: 2rem;
 }
 
-.auth-logo {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: -0.03em;
-  margin-bottom: 1rem;
+.landing-right-brand svg {
+  color: #0ea5e9;
 }
 
-.auth-logo span {
-  color: var(--primary);
+.landing-auth-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 2rem;
 }
 
-.auth-header h1 {
-  font-size: 1.35rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.auth-sub {
+.landing-tab {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 9px;
   font-size: 0.85rem;
-  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
 }
 
+.landing-tab.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
+}
+
+.landing-tab:hover:not(.active) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.landing-auth-header {
+  margin-bottom: 1.5rem;
+}
+
+.landing-auth-header h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.2rem;
+}
+
+.landing-auth-header p {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.landing-right .form-group label {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.landing-right .form-group input {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.landing-right .form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.landing-right .form-group input:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.landing-right .btn-primary {
+  background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+  border: none;
+}
+
+.landing-right .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0284c7, #0891b2);
+}
+
+.landing-right .form-error {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+.auth-footer-text {
+  text-align: center;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 1.5rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #0ea5e9;
+  font-weight: 600;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+  color: #38bdf8;
+}
+
+@media (max-width: 960px) {
+  .landing {
+    flex-direction: column;
+  }
+  .landing-left {
+    padding: 2rem 1.5rem;
+    min-height: auto;
+  }
+  .landing-nav {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin-bottom: 1.5rem;
+  }
+  .landing-hero {
+    max-width: 100%;
+  }
+  .landing-title {
+    font-size: 2.2rem;
+  }
+  .landing-deco-1 {
+    width: 300px;
+    height: 300px;
+  }
+  .landing-right {
+    width: 100%;
+    min-height: auto;
+    padding: 2rem 1.5rem;
+  }
+  .landing-left-footer {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    margin-top: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-stats {
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+  }
+  .landing-stat-num {
+    font-size: 1.1rem;
+  }
+}
+
+/* ── Auth Form Styles (used in landing page) ────────────── */
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -1295,16 +1640,6 @@ body {
   font-size: 0.85rem;
   color: var(--text-muted);
   margin-top: 1.5rem;
-}
-
-.auth-footer-text a {
-  color: var(--primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.auth-footer-text a:hover {
-  text-decoration: underline;
 }
 
 /* ── Settings Page ────────────────────────────────────────── */
