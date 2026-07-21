@@ -48,13 +48,14 @@ class Store(Base):
     name = Column(String(200), nullable=False)
     address = Column(Text, nullable=False)
     city = Column(String(100), nullable=False)
-    latitude = Column(Float, nullable=False)
-    longitude = Column(Float, nullable=False)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
     phone = Column(String(50), nullable=True)
     website = Column(String(255), nullable=True)
     store_type = Column(String(100), nullable=True)
     opening_hours = Column(JSONB, nullable=True)
     map_url = Column(Text, nullable=True)
+    categories = Column(Text, nullable=True)
 
 
 class StoreInventory(Base):

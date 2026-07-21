@@ -51,7 +51,7 @@ async def fine_tune_recommend(
     for path, score in results:
         product_id = int(Path(path).stem)
         style = get_style_by_image_path(path) or {}
-        stores = await get_stores_for_product(db, product_id)
+        stores = await get_stores_for_product(db, product_id, article_type=style.get("article_type"))
         recommendations.append(
             RecommendationOut(
                 image_path=f"/images/{Path(path).name}",
@@ -167,7 +167,7 @@ async def fine_tune_compare(
     async def _to_item(path: str, score: float, model_type: str) -> FineTuneCompareItem:
         product_id = int(Path(path).stem)
         style = get_style_by_image_path(path) or {}
-        stores = await get_stores_for_product(db, product_id)
+        stores = await get_stores_for_product(db, product_id, article_type=style.get("article_type"))
         return FineTuneCompareItem(
             model_type=model_type,
             image_path=f"/images/{Path(path).name}",

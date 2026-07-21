@@ -15,7 +15,8 @@ class StoreOut(BaseModel):
     phone: str | None = None
     website: str | None = None
     store_type: str | None = None
-    opening_hours: dict | None = None
+    opening_hours: dict | str | None = None
+    categories: str | None = None
 
 
 class RecommendationOut(BaseModel):

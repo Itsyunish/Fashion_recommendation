@@ -1,5 +1,6 @@
 """Store listing and seeding endpoints."""
 from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -27,4 +28,19 @@ async def seed_store_data(db: AsyncSession = Depends(get_db)) -> dict:
     inv_count = await seed_inventory(db)
     return {
         "message": f"Seeded {store_count} stores and {inv_count} inventory entries",
+    }
+
+
+@router.post("/api/stores/migrate")
+async def migrate_stores(db: AsyncSession = Depends(get_db)) -> dict:
+    """Add categories column and reset stores for re-seeding (category-based, no inventory)."""
+    await db.execute(text("ALTER TABLE stores ADD COLUMN IF NOT EXISTS categories TEXT"))
+    await db.execute(text("ALTER TABLE stores ALTER COLUMN latitude DROP NOT NULL"))
+    await db.execute(text("ALTER TABLE stores ALTER COLUMN longitude DROP NOT NULL"))
+    await db.execute(text("DELETE FROM store_inventory"))
+    await db.execute(text("DELETE FROM stores"))
+    await db.commit()
+    store_count = await seed_stores(db)
+    return {
+        "message": f"Migration complete. Seeded {store_count} category-based stores (no inventory mapping needed)",
     }
