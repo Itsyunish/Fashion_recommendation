@@ -15,7 +15,6 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import FileResponse
 
 from app.config import settings
@@ -59,14 +58,6 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
-
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=settings.SESSION_SECRET_KEY,
-    max_age=settings.SESSION_MAX_AGE,
-    same_site="lax",
-    https_only=False,
 )
 
 # ── Router includes ─────────────────────────────────────────────────────
