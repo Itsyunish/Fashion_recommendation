@@ -15,6 +15,7 @@ export default function BrowsePage() {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [detailRec, setDetailRec] = useState(null);
+  const [detailStores, setDetailStores] = useState([]);
   const searchRef = useRef(null);
   const debounceRef = useRef(null);
 
@@ -88,6 +89,23 @@ export default function BrowsePage() {
   const catIcons = {
     Topwear: '👕', Bottomwear: '👖', Shoes: '👟', Footwear: '👟',
     Accessories: '⌚', Dress: '👗', 'Personal Care': '🧴', Jewelry: '💍',
+  };
+
+  const handleDetailOpen = (product) => {
+    setDetailRec(product);
+    if (product.article_type) {
+      fetch(`${API_BASE_URL}/api/stores/for-category?article_type=${encodeURIComponent(product.article_type)}`)
+        .then(r => r.json())
+        .then(d => setDetailStores(d.stores || []))
+        .catch(() => setDetailStores([]));
+    } else {
+      setDetailStores([]);
+    }
+  };
+
+  const handleDetailClose = () => {
+    setDetailRec(null);
+    setDetailStores([]);
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -175,7 +193,7 @@ export default function BrowsePage() {
           <>
             <div className="browse-grid">
               {products.map((p) => (
-                <div key={p.id} className="browse-card" onClick={() => setDetailRec(p)}>
+                <div key={p.id} className="browse-card" onClick={() => handleDetailOpen(p)}>
                   <div className="browse-card-img">
                     <img src={API_BASE_URL + p.image_path} alt="" loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
                     {p.article_type && (
@@ -226,8 +244,9 @@ export default function BrowsePage() {
             base_colour: detailRec.base_colour,
             usage: detailRec.usage,
             rating: detailRec.rating,
+            stores: detailStores,
           }}
-          onClose={() => setDetailRec(null)}
+          onClose={handleDetailClose}
         />
       )}
     </div>
