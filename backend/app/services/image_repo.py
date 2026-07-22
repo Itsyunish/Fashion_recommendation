@@ -4,7 +4,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -156,10 +156,15 @@ async def seed_from_csv(db: AsyncSession, csv_path: str) -> int:
 
 def find_fine_tune_csv() -> Path | None:
     root = Path(__file__).resolve().parent.parent.parent.parent
+    embed_path = (
+        settings.FINE_TUNE_KERAS_EMBED_PATH if settings.USE_KERAS
+        else settings.FINE_TUNE_EMBED_PATH
+    )
     candidates = [
-        Path(settings.FINE_TUNE_EMBED_PATH),
-        root / settings.FINE_TUNE_EMBED_PATH,
+        Path(embed_path),
+        root / embed_path,
         Path("/app/fine_tuned_model/best_embeddings.csv"),
+        Path("/app/fine_tuned_model/fine_tuned_embeddings.csv"),
     ]
     for p in candidates:
         if p.exists():
@@ -168,6 +173,9 @@ def find_fine_tune_csv() -> Path | None:
 
 
 async def get_fine_tune_embedding_count(db: AsyncSession) -> int:
+    if settings.USE_KERAS:
+        result = await db.execute(text("SELECT COUNT(*) FROM keras_fine_tune_embeddings"))
+        return result.scalar() or 0
     count = await db.scalar(select(func.count(FineTuneEmbedding.id)))
     return count or 0
 
@@ -176,22 +184,25 @@ async def seed_fine_tune_from_csv(db: AsyncSession, csv_path: str) -> int:
     total = 0
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames or []
+        has_embedding_col = "embedding" in fieldnames
         for row in reader:
-            embedding = json.loads(row["embedding"])
-            db.add(FineTuneEmbedding(image_path=row["image_path"], embedding=embedding))
+            if has_embedding_col:
+                embedding = json.loads(row["embedding"])
+            else:
+                dim_cols = [c for c in fieldnames if c not in ("image_path", "id")]
+                embedding = [float(row[c]) for c in dim_cols]
+
+            if settings.USE_KERAS:
+                vec_literal = "[" + ",".join(str(v) for v in embedding) + "]"
+                await db.execute(text(f"""
+                    INSERT INTO keras_fine_tune_embeddings (image_path, embedding)
+                    VALUES (:path, '{vec_literal}'::vector)
+                """), {"path": row["image_path"]})
+            else:
+                db.add(FineTuneEmbedding(image_path=row["image_path"], embedding=embedding))
             total += 1
             if total % 500 == 0:
                 await db.flush()
         await db.commit()
     return total
-
-
-def load_style_csv() -> dict[str, dict]:
-    """Load styles.csv once and cache it in memory."""
-    return _load_styles()
-
-
-def find_images_by_category(category: str) -> list[str]:
-    """Return image ids that belong to a given master category."""
-    return [i for i, s in _load_styles().items()
-            if s.get("master_category") == category]
