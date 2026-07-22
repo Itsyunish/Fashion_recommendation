@@ -1,11 +1,11 @@
 """Store listing and seeding endpoints."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.schemas import StoreListResponse, StoreOut
-from app.services.store_repo import get_all_stores, get_store_count, seed_inventory, seed_stores
+from app.services.store_repo import get_all_stores, get_stores_for_product, get_store_count, seed_inventory, seed_stores
 
 router = APIRouter(tags=["stores"])
 
@@ -44,3 +44,13 @@ async def migrate_stores(db: AsyncSession = Depends(get_db)) -> dict:
     return {
         "message": f"Migration complete. Seeded {store_count} category-based stores (no inventory mapping needed)",
     }
+
+
+@router.get("/api/stores/for-category", response_model=StoreListResponse)
+async def stores_for_category(
+    article_type: str = Query(..., max_length=100),
+    db: AsyncSession = Depends(get_db),
+) -> StoreListResponse:
+    """Return stores whose categories match the given article type."""
+    stores = await get_stores_for_product(db, product_id=0, article_type=article_type)
+    return StoreListResponse(stores=[StoreOut(**s) for s in stores])

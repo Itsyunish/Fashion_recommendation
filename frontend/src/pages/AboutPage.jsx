@@ -1,4 +1,15 @@
+import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
+
 export default function AboutPage() {
+  const [storeCount, setStoreCount] = useState(null);
+
+  useEffect(() => {
+    fetch(API_BASE_URL + '/api/stores/status')
+      .then(r => r.json())
+      .then(d => setStoreCount(d.count))
+      .catch(() => {});
+  }, []);
   const features = [
     {
       icon: (
@@ -103,7 +114,7 @@ export default function AboutPage() {
               and discover where to find similar styles at stores across Nepal.
             </p>
             <p>
-              We currently cover 45+ stores across Kathmandu and Lalitpur, spanning
+              We currently cover {storeCount ?? '—'} stores across Kathmandu and Lalitpur, spanning
               T-shirts, shirts, pants, shoes, watches, sarees, innerwear, and eyewear.
             </p>
           </div>

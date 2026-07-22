@@ -45,7 +45,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -1209,21 +1209,17 @@ body {
 
 /* ── Landing Page ────────────────────────────────────────── */
 .landing {
-  display: flex;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
-/* ── Left Panel ─────────────────────────────────────────── */
-.landing-left {
-  flex: 1;
+.landing-hero-bg {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #0c1524 0%, #162d50 35%, #0ea5e9 100%);
+  color: #fff;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 2rem 4.5rem;
-  background: linear-gradient(160deg, #0c1524 0%, #162d50 40%, #0ea5e9 100%);
-  color: #fff;
-  position: relative;
   overflow: hidden;
 }
 
@@ -1236,24 +1232,27 @@ body {
 }
 
 .landing-deco-1 {
-  width: 500px;
-  height: 500px;
-  top: -150px;
-  right: -100px;
+  width: 600px;
+  height: 600px;
+  top: -200px;
+  right: -150px;
 }
 
 .landing-deco-2 {
-  width: 300px;
-  height: 300px;
-  bottom: -80px;
-  left: -60px;
+  width: 400px;
+  height: 400px;
+  bottom: -120px;
+  left: -100px;
 }
 
+/* ── Nav ─────────────────────────────────────────────────── */
 .landing-nav {
-  position: absolute;
-  top: 2rem;
-  left: 4.5rem;
-  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 3.5rem;
+  position: relative;
+  z-index: 10;
 }
 
 .landing-nav-brand {
@@ -1269,6 +1268,40 @@ body {
   opacity: 0.9;
 }
 
+.landing-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.landing-nav-btn {
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.landing-nav-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.landing-nav-btn-primary {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.landing-nav-btn-primary:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Hero ────────────────────────────────────────────────── */
 .landing-hero {
   flex: 1;
   display: flex;
@@ -1279,6 +1312,7 @@ body {
   position: relative;
   z-index: 1;
   width: 100%;
+  padding: 2rem 2rem 4rem;
 }
 
 .landing-badge {
@@ -1297,9 +1331,9 @@ body {
 }
 
 .landing-title {
-  font-size: 3.2rem;
+  font-size: 4rem;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.08;
   letter-spacing: -0.04em;
   margin-bottom: 1.75rem;
 }
@@ -1312,19 +1346,20 @@ body {
 }
 
 .landing-sub {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   line-height: 1.65;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 2.5rem;
+  max-width: 560px;
   text-align: center;
 }
 
 .landing-stats {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-  padding: 1rem 1.25rem;
+  gap: 1.75rem;
+  margin-bottom: 2.5rem;
+  padding: 1rem 1.5rem;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
@@ -1332,7 +1367,7 @@ body {
 }
 
 .landing-stat-num {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
@@ -1351,17 +1386,65 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
+/* ── CTA Buttons ─────────────────────────────────────────── */
+.landing-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 3rem;
+}
+
+.landing-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.75rem;
+  background: #fff;
+  color: #0c1524;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.landing-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(0,0,0,0.3);
+}
+
+.landing-cta-btn-secondary {
+  padding: 0.85rem 1.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.landing-cta-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ── Feature Cards ───────────────────────────────────────── */
 .landing-features {
   display: flex;
-  flex-direction: column;
   gap: 0.85rem;
+  max-width: 700px;
+  width: 100%;
 }
 
 .landing-feature-card {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.85rem 1.1rem;
+  padding: 0.85rem 1rem;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
@@ -1392,32 +1475,109 @@ body {
 }
 
 .landing-feature-desc {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.55);
-}
-
-.landing-left-footer {
-  position: absolute;
-  bottom: 1.5rem;
-  left: 4.5rem;
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.5);
 }
 
-/* ── Right Panel ────────────────────────────────────────── */
-.landing-right {
-  width: 480px;
-  min-height: 100vh;
+/* ── Floating Product Images ─────────────────────────────── */
+.floating-product {
+  position: absolute;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  border: 2px solid rgba(255,255,255,0.12);
+  opacity: 0;
+  animation: floatIn 1.2s ease forwards;
+  z-index: 0;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+.floating-product img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fp-0 { animation: floatIn 1.2s ease forwards, floatBob 7s ease-in-out 0s infinite; }
+.fp-1 { animation: floatIn 1.2s ease 0.15s forwards, floatBob 6.5s ease-in-out 0.5s infinite; }
+.fp-2 { animation: floatIn 1.2s ease 0.3s forwards, floatBob 8s ease-in-out 0.3s infinite; }
+.fp-3 { animation: floatIn 1.2s ease 0.45s forwards, floatBob 7.5s ease-in-out 0.8s infinite; }
+.fp-4 { animation: floatIn 1.2s ease 0.6s forwards, floatBob 6s ease-in-out 0.2s infinite; }
+.fp-5 { animation: floatIn 1.2s ease 0.75s forwards, floatBob 7s ease-in-out 0.6s infinite; }
+.fp-6 { animation: floatIn 1.2s ease 0.9s forwards, floatBob 8s ease-in-out 1s infinite; }
+.fp-7 { animation: floatIn 1.2s ease 1.05s forwards, floatBob 6.5s ease-in-out 0.4s infinite; }
+
+@keyframes floatIn {
+  0% { opacity: 0; transform: translateY(40px) scale(0.85); }
+  100% { opacity: 0.55; transform: translateY(0) scale(1); }
+}
+
+@keyframes floatBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+@media (max-width: 960px) {
+  .floating-product { display: none; }
+  .landing-features { flex-direction: column; max-width: 400px; }
+}
+
+/* ── Auth Overlay & Panel ────────────────────────────────── */
+.landing-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+  animation: overlayFadeIn 0.25s ease;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.landing-auth-panel {
+  width: 420px;
+  max-width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  background: linear-gradient(170deg, #0f1a2e 0%, #111d33 50%, #0d2137 100%);
+  padding: 2rem 2.5rem;
+  position: relative;
+  animation: panelSlideIn 0.3s ease;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.4);
+}
+
+@keyframes panelSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.auth-panel-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem;
-  background: linear-gradient(170deg, #0f1a2e 0%, #111d33 50%, #0d2137 100%);
+  background: rgba(255,255,255,0.08);
+  border: none;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.landing-auth-card {
-  width: 100%;
-  max-width: 380px;
+.auth-panel-close:hover {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
 }
 
 .landing-right-brand {
@@ -1483,36 +1643,36 @@ body {
   color: rgba(255, 255, 255, 0.45);
 }
 
-.landing-right .form-group label {
+.landing-auth-panel .form-group label {
   color: rgba(255, 255, 255, 0.55);
 }
 
-.landing-right .form-group input {
+.landing-auth-panel .form-group input {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
-.landing-right .form-group input::placeholder {
+.landing-auth-panel .form-group input::placeholder {
   color: rgba(255, 255, 255, 0.3);
 }
 
-.landing-right .form-group input:focus {
+.landing-auth-panel .form-group input:focus {
   border-color: #0ea5e9;
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
   background: rgba(255, 255, 255, 0.08);
 }
 
-.landing-right .btn-primary {
+.landing-auth-panel .btn-primary {
   background: linear-gradient(135deg, #0ea5e9, #06b6d4);
   border: none;
 }
 
-.landing-right .btn-primary:hover:not(:disabled) {
+.landing-auth-panel .btn-primary:hover:not(:disabled) {
   background: linear-gradient(135deg, #0284c7, #0891b2);
 }
 
-.landing-right .form-error {
+.landing-auth-panel .form-error {
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.25);
   color: #fca5a5;
@@ -1540,51 +1700,108 @@ body {
   color: #38bdf8;
 }
 
-@media (max-width: 960px) {
-  .landing {
-    flex-direction: column;
-  }
-  .landing-left {
-    padding: 2rem 1.5rem;
-    min-height: auto;
-  }
-  .landing-nav {
-    position: relative;
-    top: auto;
-    left: auto;
-    margin-bottom: 1.5rem;
-  }
-  .landing-hero {
-    max-width: 100%;
-  }
-  .landing-title {
-    font-size: 2.2rem;
-  }
-  .landing-deco-1 {
-    width: 300px;
-    height: 300px;
-  }
-  .landing-right {
-    width: 100%;
-    min-height: auto;
-    padding: 2rem 1.5rem;
-  }
-  .landing-left-footer {
-    position: relative;
-    bottom: auto;
-    left: auto;
-    margin-top: 1.5rem;
-  }
+/* ── FAQ Section ─────────────────────────────────────── */
+.landing-faq-section {
+  width: 100%;
+  background: linear-gradient(180deg, #0c1524 0%, #111d33 100%);
+  padding: 4rem 2rem;
 }
 
-@media (max-width: 480px) {
-  .landing-stats {
-    gap: 1rem;
-    padding: 0.85rem 1rem;
-  }
-  .landing-stat-num {
-    font-size: 1.1rem;
-  }
+.landing-faq-inner {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.landing-faq-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.landing-faq-sub {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.landing-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.landing-faq-item {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.landing-faq-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.landing-faq-item.open {
+  background: rgba(14,165,233,0.08);
+  border-color: rgba(14,165,233,0.25);
+}
+
+.landing-faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.landing-faq-chevron {
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.4);
+  transition: transform 0.3s;
+}
+
+.landing-faq-item.open .landing-faq-chevron {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.landing-faq-a {
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: rgba(255,255,255,0.6);
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ── Landing Footer Bar ──────────────────────────────── */
+.landing-footer-bar {
+  width: 100%;
+  background: #080e1a;
+  padding: 1.25rem 2rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+}
+
+/* ── Landing Responsive ──────────────────────────────── */
+@media (max-width: 600px) {
+  .landing-nav { padding: 1.25rem 1.5rem; }
+  .landing-title { font-size: 2.4rem; }
+  .landing-sub { font-size: 0.95rem; }
+  .landing-stats { gap: 1rem; padding: 0.85rem 1rem; }
+  .landing-stat-num { font-size: 1.1rem; }
+  .landing-cta-row { flex-direction: column; width: 100%; max-width: 300px; }
+  .landing-cta-btn, .landing-cta-btn-secondary { width: 100%; text-align: center; justify-content: center; }
+  .landing-auth-panel { width: 100%; }
+  .landing-faq-section { padding: 3rem 1.25rem; }
 }
 
 /* ── Auth Form Styles (used in landing page) ────────────── */
