@@ -182,13 +182,6 @@ export default function HomePage() {
     <>
       {seeded === false && <SeedBanner type="base" />}
 
-      <div className="hero-section" style={{backgroundImage: 'url(/images/hero-bg.svg)'}}>
-        <div className="container">
-          <h1 className="hero-title">Discover Your Style</h1>
-          <p className="hero-sub">Upload a photo and find visually similar fashion items from our collection.</p>
-        </div>
-      </div>
-
       <div className="container home-layout">
         <aside className="query-panel">
           <div className="query-card">
@@ -251,7 +244,7 @@ export default function HomePage() {
                 </div>
                 <div className="empty-hint">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span>Find stores near you</span>
+                  <span>View store availability for each result</span>
                 </div>
               </div>
             </div>

@@ -8,44 +8,54 @@ export default function AboutPage() {
         </svg>
       ),
       title: 'Visual Search',
-      desc: 'Upload any outfit photo and our AI finds visually similar items from a catalog of 44K+ fashion products using deep learning embeddings.',
+      desc: 'Upload any outfit photo and our AI instantly finds visually similar items from a catalog of 44,000+ fashion products.',
     },
     {
       icon: (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
         </svg>
       ),
-      title: 'Similarity Search',
-      desc: 'Powered by EfficientNetB3 and pgvector cosine similarity, delivering millisecond-level search across thousands of high-dimensional vectors.',
+      title: 'Smart Matching',
+      desc: 'Our AI analyzes color, pattern, style, and silhouette to deliver the most relevant matches in seconds.',
     },
     {
       icon: (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
         </svg>
       ),
-      title: 'Store Availability',
-      desc: 'See which stores in Nepal carry each product. Click to open Google Maps directions directly to the store location.',
+      title: 'Store Finder',
+      desc: 'See which stores near you carry each product. Get directions with one click via Google Maps.',
     },
     {
       icon: (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
       ),
-      title: 'Fine-Tuned Model',
-      desc: 'A custom-trained model for improved fashion-specific similarity, plus a side-by-side comparison mode to evaluate both models.',
+      title: 'Category-Aware Results',
+      desc: 'Results are mapped to the right stores — T-shirts show T-shirt stores, shoes show shoe stores, and so on.',
     },
   ];
 
-  const techStack = [
-    { label: 'Backend', value: 'FastAPI (Python)' },
-    { label: 'Frontend', value: 'React 18 + Vite' },
-    { label: 'AI Model', value: 'EfficientNetB3 (TensorFlow/Keras)' },
-    { label: 'Vector DB', value: 'PostgreSQL + pgvector' },
-    { label: 'Auth', value: 'Session-based (bcrypt)' },
-    { label: 'Container', value: 'Docker Compose' },
+  const steps = [
+    {
+      num: '01',
+      title: 'Upload',
+      desc: 'Take a photo of any outfit or upload one from your gallery.',
+    },
+    {
+      num: '02',
+      title: 'Discover',
+      desc: 'Our AI finds the closest visual matches from 44K+ products.',
+    },
+    {
+      num: '03',
+      title: 'Shop',
+      desc: 'Find nearby stores that carry your matched items and visit them.',
+    },
   ];
 
   return (
@@ -53,30 +63,49 @@ export default function AboutPage() {
       <div className="about-hero">
         <div className="container">
           <h1>About PixelCloset</h1>
-          <p className="about-hero-sub">AI-powered visual similarity search for fashion — built for Nepal.</p>
+          <p className="about-hero-sub">Find your perfect style — powered by AI, built for Nepal.</p>
         </div>
       </div>
 
       <div className="container about-content">
-        <div className="about-grid">
-          {features.map((f, i) => (
-            <div key={i} className="about-card">
-              <div className="about-card-icon">{f.icon}</div>
-              <h3>{f.title}</h3>
-              <p>{f.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="about-tech-section">
-          <h2>Tech Stack</h2>
-          <div className="about-tech-grid">
-            {techStack.map((t, i) => (
-              <div key={i} className="about-tech-item">
-                <span className="about-tech-label">{t.label}</span>
-                <span className="about-tech-value">{t.value}</span>
+        <div className="about-section">
+          <h2 className="about-section-title">How It Works</h2>
+          <div className="about-steps">
+            {steps.map((s, i) => (
+              <div key={i} className="about-step">
+                <div className="about-step-num">{s.num}</div>
+                <h3>{s.title}</h3>
+                <p>{s.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="about-section">
+          <h2 className="about-section-title">Features</h2>
+          <div className="about-grid">
+            {features.map((f, i) => (
+              <div key={i} className="about-card">
+                <div className="about-card-icon">{f.icon}</div>
+                <h3>{f.title}</h3>
+                <p>{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="about-section about-mission">
+          <div className="about-mission-content">
+            <h2>Our Mission</h2>
+            <p>
+              PixelCloset bridges the gap between online inspiration and offline shopping.
+              Upload any outfit photo — from social media, a magazine, or your own wardrobe —
+              and discover where to find similar styles at stores across Nepal.
+            </p>
+            <p>
+              We currently cover 45+ stores across Kathmandu and Lalitpur, spanning
+              T-shirts, shirts, pants, shoes, watches, sarees, innerwear, and eyewear.
+            </p>
           </div>
         </div>
       </div>
