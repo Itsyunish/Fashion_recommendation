@@ -1,9 +1,14 @@
-"""Auth endpoints — signup, login, logout, profile management."""
-from fastapi import APIRouter, Depends, HTTPException, Request
+"""Auth endpoints — signup, login, logout, profile management (JWT-based)."""
+import datetime
+from typing import Any
+
+import bcrypt
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-import bcrypt
 
+from app.config import settings
 from app.database import get_db
 from app.models import User
 from app.schemas import (
@@ -17,12 +22,45 @@ from app.schemas import (
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
+COOKIE_NAME = "access_token"
+COOKIE_MAX_AGE = settings.SESSION_MAX_AGE  # 7 days
+
+
+def _create_token(user_id: int) -> str:
+    payload = {
+        "sub": str(user_id),
+        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=COOKIE_MAX_AGE),
+        "iat": datetime.datetime.now(datetime.timezone.utc),
+    }
+    return jwt.encode(payload, settings.SESSION_SECRET_KEY, algorithm="HS256")
+
+
+def _set_token_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=token,
+        max_age=COOKIE_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        path="/",
+    )
+
+
+def _clear_token_cookie(response: Response) -> None:
+    response.delete_cookie(key=COOKIE_NAME, path="/")
+
 
 async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)) -> User:
-    """Dependency that returns the authenticated user or raises 401."""
-    user_id = request.session.get("user_id")
-    if user_id is None:
+    """Dependency: extract user from JWT cookie or raise 401."""
+    token = request.cookies.get(COOKIE_NAME)
+    if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(token, settings.SESSION_SECRET_KEY, algorithms=["HS256"])
+        user_id = int(payload["sub"])
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, KeyError, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:
@@ -31,8 +69,7 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
 
 
 @router.post("/signup", response_model=AuthResponse)
-async def signup(body: SignupRequest, request: Request, db: AsyncSession = Depends(get_db)) -> AuthResponse:
-    """Register a new user account."""
+async def signup(body: SignupRequest, response: Response, db: AsyncSession = Depends(get_db)) -> AuthResponse:
     result = await db.execute(select(User).where(User.email == body.email))
     if result.scalar_one_or_none():
         raise HTTPException(409, "Email already registered")
@@ -50,7 +87,9 @@ async def signup(body: SignupRequest, request: Request, db: AsyncSession = Depen
     await db.commit()
     await db.refresh(user)
 
-    request.session["user_id"] = user.id
+    token = _create_token(user.id)
+    _set_token_cookie(response, token)
+
     return AuthResponse(
         message="Account created successfully",
         user=UserOut(id=user.id, username=user.username, email=user.email),
@@ -58,14 +97,15 @@ async def signup(body: SignupRequest, request: Request, db: AsyncSession = Depen
 
 
 @router.post("/login", response_model=AuthResponse)
-async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends(get_db)) -> AuthResponse:
-    """Authenticate a user and create a session."""
+async def login(body: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)) -> AuthResponse:
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
     if not user or not bcrypt.checkpw(body.password.encode(), user.password_hash.encode()):
         raise HTTPException(401, "Invalid email or password")
 
-    request.session["user_id"] = user.id
+    token = _create_token(user.id)
+    _set_token_cookie(response, token)
+
     return AuthResponse(
         message="Logged in successfully",
         user=UserOut(id=user.id, username=user.username, email=user.email),
@@ -73,39 +113,34 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
 
 
 @router.post("/logout")
-async def logout(request: Request) -> dict:
-    """Clear the user session."""
-    request.session.clear()
+async def logout(response: Response) -> dict:
+    _clear_token_cookie(response)
     return {"message": "Logged out"}
 
 
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)) -> UserOut:
-    """Return the currently authenticated user's info."""
     return UserOut(id=current_user.id, username=current_user.username, email=current_user.email)
 
 
 @router.delete("/me")
 async def delete_account(
-    request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    """Delete the authenticated user's account."""
     await db.delete(current_user)
     await db.commit()
-    request.session.clear()
+    _clear_token_cookie(response)
     return {"message": "Account deleted"}
 
 
 @router.post("/change-password")
 async def change_password(
     body: ChangePasswordRequest,
-    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    """Change the authenticated user's password."""
     if not bcrypt.checkpw(body.old_password.encode(), current_user.password_hash.encode()):
         raise HTTPException(400, "Current password is incorrect")
     current_user.password_hash = bcrypt.hashpw(body.new_password.encode(), bcrypt.gensalt()).decode()
@@ -119,7 +154,6 @@ async def update_profile(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> AuthResponse:
-    """Update the authenticated user's username and/or email."""
     if body.username is not None:
         result = await db.execute(select(User).where(User.username == body.username, User.id != current_user.id))
         if result.scalar_one_or_none():
@@ -128,7 +162,7 @@ async def update_profile(
     if body.email is not None:
         result = await db.execute(select(User).where(User.email == body.email, User.id != current_user.id))
         if result.scalar_one_or_none():
-            raise HTTPException(409, "Email already registered")
+            raise HTTPException(409, "Email already taken")
         current_user.email = body.email
     await db.commit()
     return AuthResponse(
