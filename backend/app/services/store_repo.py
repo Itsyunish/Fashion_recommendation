@@ -133,21 +133,24 @@ def _store_to_dict(s: Store) -> dict:
 
 
 async def get_stores_for_product(db: AsyncSession, product_id: int, article_type: str | None = None) -> list[dict]:
-    result = await db.execute(
-        select(Store).join(StoreInventory, Store.id == StoreInventory.store_id)
-        .where(StoreInventory.product_id == product_id)
-    )
-    stores = {s.id: _store_to_dict(s) for s in result.scalars().all()}
+    stores: dict[int, dict] = {}
 
     if article_type:
         cat_result = await db.execute(select(Store))
         for s in cat_result.scalars().all():
-            if s.id in stores:
-                continue
             if s.categories:
                 cat_list = [c.strip() for c in s.categories.split(",")]
                 if article_type.strip() in cat_list:
                     stores[s.id] = _store_to_dict(s)
+
+    if not stores:
+        result = await db.execute(
+            select(Store).join(StoreInventory, Store.id == StoreInventory.store_id)
+            .where(StoreInventory.product_id == product_id)
+        )
+        for s in result.scalars().all():
+            if s.id not in stores:
+                stores[s.id] = _store_to_dict(s)
 
     return list(stores.values())
 

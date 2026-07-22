@@ -85,6 +85,11 @@ export default function BrowsePage() {
     setShowSuggestions(false);
   };
 
+  const catIcons = {
+    Topwear: '👕', Bottomwear: '👖', Shoes: '👟', Footwear: '👟',
+    Accessories: '⌚', Dress: '👗', 'Personal Care': '🧴', Jewelry: '💍',
+  };
+
   const totalPages = Math.ceil(total / limit);
 
   return (
@@ -92,7 +97,7 @@ export default function BrowsePage() {
       <div className="browse-header">
         <div className="container">
           <h1>Browse Catalog</h1>
-          <p className="browse-sub">{total.toLocaleString()} products</p>
+          <p className="browse-sub">{total.toLocaleString()} products available</p>
 
           <form className="browse-search-form" onSubmit={handleSearch}>
             <div className="browse-search-wrap" ref={searchRef}>
@@ -131,26 +136,16 @@ export default function BrowsePage() {
               className={`browse-cat-chip ${category === '' ? 'active' : ''}`}
               onClick={() => handleCategoryClick('')}
             >All</button>
-            {categories.slice(0, 15).map((cat) => {
-              const catImg = {
-                Topwear: '/images/cat-topwear.svg',
-                Bottomwear: '/images/cat-bottomwear.svg',
-                Shoes: '/images/cat-footwear.svg',
-                Footwear: '/images/cat-footwear.svg',
-                Accessories: '/images/cat-accessories.svg',
-                Dress: '/images/cat-dress.svg',
-              }[cat] || null;
-              return (
-                <button
-                  key={cat}
-                  className={`browse-cat-chip ${category === cat ? 'active' : ''}`}
-                  onClick={() => handleCategoryClick(cat)}
-                >
-                  {catImg && <img src={catImg} alt="" className="browse-cat-icon" />}
-                  {cat}
-                </button>
-              );
-            })}
+            {categories.slice(0, 12).map((cat) => (
+              <button
+                key={cat}
+                className={`browse-cat-chip ${category === cat ? 'active' : ''}`}
+                onClick={() => handleCategoryClick(cat)}
+              >
+                {catIcons[cat] && <span className="browse-cat-emoji">{catIcons[cat]}</span>}
+                {cat}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -165,8 +160,14 @@ export default function BrowsePage() {
 
         {!loading && products.length === 0 && (
           <div className="browse-empty">
-            <img src="/images/empty-state.svg" alt="" className="browse-empty-img" />
-            <p>No products found. Try a different search.</p>
+            <div className="browse-empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                <line x1="8" y1="11" x2="14" y2="11"/>
+              </svg>
+            </div>
+            <h3>No products found</h3>
+            <p>Try a different search term or browse by category.</p>
           </div>
         )}
 
@@ -177,12 +178,19 @@ export default function BrowsePage() {
                 <div key={p.id} className="browse-card" onClick={() => setDetailRec(p)}>
                   <div className="browse-card-img">
                     <img src={API_BASE_URL + p.image_path} alt="" loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
+                    {p.article_type && (
+                      <span className="browse-card-tag">{p.article_type}</span>
+                    )}
                   </div>
                   <div className="browse-card-body">
+                    <div className="browse-card-brand">{p.brand_name || p.gender || ''}</div>
                     <div className="browse-card-title">{p.product_display_name || p.id}</div>
                     <div className="browse-card-meta">
                       {p.base_colour && <span>{p.base_colour}</span>}
-                      {p.gender && <span>{p.gender}</span>}
+                      {p.usage && <span>{p.usage}</span>}
+                      {p.rating > 0 && (
+                        <span className="browse-card-rating">★ {Number(p.rating).toFixed(1)}</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -191,9 +199,15 @@ export default function BrowsePage() {
 
             {totalPages > 1 && (
               <div className="browse-pagination">
-                <button disabled={page <= 1} onClick={() => { setPage(page - 1); fetchProducts(search, category, page - 1); }}>Previous</button>
-                <span>Page {page} of {totalPages}</span>
-                <button disabled={page >= totalPages} onClick={() => { setPage(page + 1); fetchProducts(search, category, page + 1); }}>Next</button>
+                <button disabled={page <= 1} onClick={() => { setPage(page - 1); fetchProducts(search, category, page - 1); }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                  Prev
+                </button>
+                <span>Page {page} of {totalPages.toLocaleString()}</span>
+                <button disabled={page >= totalPages} onClick={() => { setPage(page + 1); fetchProducts(search, category, page + 1); }}>
+                  Next
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
               </div>
             )}
           </>

@@ -85,14 +85,6 @@ export default function DetailModal({ rec, onClose }) {
             </div>
           )}
 
-          <table className="modal-table">
-            <tbody>
-              <Row label="Gender" val={rec.gender} />
-              <Row label="Category" val={rec.master_category} />
-              <Row label="Sub Category" val={rec.sub_category} />
-              <Row label="Colour" val={rec.base_colour} />
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
