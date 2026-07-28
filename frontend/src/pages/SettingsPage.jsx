@@ -7,7 +7,8 @@ import { useApp } from '../context/AppContext';
 export default function SettingsPage() {
   const navigate = useNavigate();
   const showToast = useToast();
-  const { user, setUser, theme, toggleTheme, clearFavorites, favorites } = useApp();
+  const { user, setUser, theme, toggleTheme, clearFavorites, favorites, enableFineTune, setEnableFineTune } = useApp();
+  const [fineTuneLoading, setFineTuneLoading] = useState(false);
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -80,6 +81,30 @@ export default function SettingsPage() {
       setPasswordError('Network error');
     } finally {
       setPassLoading(false);
+    }
+  };
+
+  const handleToggleFineTune = async () => {
+    const next = !enableFineTune;
+    setFineTuneLoading(true);
+    try {
+      const res = await fetch(API_BASE_URL + '/api/config/fine-tune', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ enabled: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.detail || 'Failed to update');
+        return;
+      }
+      setEnableFineTune(data.enable_fine_tune);
+      showToast(data.message, 'success');
+    } catch {
+      showToast('Network error');
+    } finally {
+      setFineTuneLoading(false);
     }
   };
 
@@ -171,6 +196,25 @@ export default function SettingsPage() {
               </label>
             </div>
             <p className="field-hint">Automatically saved</p>
+          </div>
+        </div>
+
+        <div className="settings-card">
+          <div className="settings-card-header">
+            <div>
+              <h2>Style Focus</h2>
+              <p>Enable or disable the Style Focus recommendation model</p>
+            </div>
+          </div>
+          <div className="settings-card-body">
+            <div className="theme-row">
+              <span>Enable Style Focus</span>
+              <label className="toggle-switch">
+                <input type="checkbox" checked={enableFineTune} onChange={handleToggleFineTune} disabled={fineTuneLoading} />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+              <p className="field-hint">When enabled, a Style Focus tab will appear in the navigation bar.</p>
           </div>
         </div>
 
