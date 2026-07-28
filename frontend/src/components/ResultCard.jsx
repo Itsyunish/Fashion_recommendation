@@ -6,7 +6,7 @@ function valid(v) {
   return v != null && v !== '' && !/^(na|n\/a|null|none|-)$/i.test(String(v).trim());
 }
 
-export default function ResultCard({ rec, isCompareChecked, onToggleCompare, onFindSimilar, onOpenDetail }) {
+export default function ResultCard({ rec, onFindSimilar, onOpenDetail }) {
   const { favorites, addFavorite, removeFavorite } = useApp();
   const filename = rec.image_path.split('/').pop();
   const isFav = favorites.has(rec.image_path);
@@ -20,10 +20,6 @@ export default function ResultCard({ rec, isCompareChecked, onToggleCompare, onF
     e.stopPropagation();
     if (isFav) removeFavorite(rec.image_path);
     else addFavorite(rec.image_path);
-  };
-
-  const handleCompareChange = (e) => {
-    onToggleCompare(rec.image_path, e.target.checked);
   };
 
   const handleFindSimilar = (e) => {
@@ -43,7 +39,6 @@ export default function ResultCard({ rec, isCompareChecked, onToggleCompare, onF
         <button className={`card-fav ${isFav ? 'active' : ''}`} onClick={handleFavClick}>
           {isFav ? '\u2665' : '\u2661'}
         </button>
-        <input type="checkbox" className="card-compare-check" checked={!!isCompareChecked} onChange={handleCompareChange} />
         <button className="card-find-btn" onClick={handleFindSimilar}>
           Find Similar
         </button>

@@ -15,7 +15,7 @@ export default function SeedBanner({ type = 'base' }) {
     setSeeding(true);
     setStatusText(isBase
       ? 'Seeding database… (may take a minute)'
-      : 'Seeding fine-tune database… (may take a minute)'
+      : 'Seeding Style Focus database… (may take a minute)'
     );
 
     try {
@@ -41,15 +41,15 @@ export default function SeedBanner({ type = 'base' }) {
     <div className="container">
       <div className="seed-banner">
         <div className="seed-banner-content" style={{ display: seeding ? 'none' : 'flex' }}>
-          <strong>{isBase ? 'Database not seeded.' : 'Fine-tune database not seeded.'}</strong>
+          <strong>{isBase ? 'Database not seeded.' : 'Style Focus database not seeded.'}</strong>
           <span>
             {isBase
-              ? 'Load the 44K outfit embeddings from CSV to enable recommendations.'
-              : 'Load fine-tuned embeddings from CSV to enable fine-tuned recommendations.'
+              ? 'Load the outfit embeddings from CSV to enable Style Match recommendations.'
+              : 'Load Style Focus embeddings from CSV to enable Style Focus recommendations.'
             }
           </span>
           <button className="btn btn-primary" onClick={handleSeed} disabled={seeding}>
-            {isBase ? 'Seed Database' : 'Seed Fine-Tune DB'}
+            {isBase ? 'Seed Database' : 'Seed Style Focus DB'}
           </button>
         </div>
         {seeding && (

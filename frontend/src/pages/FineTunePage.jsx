@@ -11,6 +11,7 @@ export default function FineTunePage() {
 
   const [topK, setTopK] = useState(5);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [dropZoneKey, setDropZoneKey] = useState(0);
   const [ftLoading, setFtLoading] = useState(false);
   const [cmpLoading, setCmpLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
@@ -40,7 +41,7 @@ export default function FineTunePage() {
   const handleFtRecommend = useCallback(async () => {
     if (!selectedFile) return;
     setFtLoading(true);
-    setLoadingMsg('Searching with fine-tuned model…');
+    setLoadingMsg('Searching with Style Focus…');
     setFtResults(null);
     setCompareData(null);
 
@@ -52,7 +53,7 @@ export default function FineTunePage() {
 
       if (res.status === 404) {
         setFtLoading(false);
-        showToast('No fine-tune embeddings in database. Seed the data first.');
+        showToast('No Style Focus embeddings in database. Seed the data first.');
         return;
       }
 
@@ -103,8 +104,8 @@ export default function FineTunePage() {
       <div className="container home-layout">
         <aside className="query-panel">
           <div className="query-card">
-            <h2 className="query-title">Fine-Tune Query</h2>
-            <p className="query-sub">Upload a photo to get recommendations from the fine-tuned model.</p>
+            <h2 className="query-title">Style Focus Query</h2>
+            <p className="query-sub">Upload a photo to get recommendations from the Style Focus model.</p>
 
             <div className="top-k-row">
               <label>Results: <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{topK}</span></label>
@@ -118,7 +119,7 @@ export default function FineTunePage() {
               />
             </div>
 
-            <DropZone onFileSelect={handleFileSelect} />
+            <DropZone key={dropZoneKey} onFileSelect={handleFileSelect} />
 
             {selectedFile && (
               <div className="ft-btn-row">
@@ -127,15 +128,26 @@ export default function FineTunePage() {
                   onClick={handleFtRecommend}
                   disabled={ftLoading || cmpLoading}
                 >
-                  {ftLoading ? 'Analysing…' : 'Get Fine-Tune Recommendations'}
+                  {ftLoading ? 'Analysing…' : 'Get Style Focus Recommendations'}
                 </button>
                 <button
                   className="btn btn-full"
                   onClick={handleCompare}
                   disabled={ftLoading || cmpLoading}
-                  style={{ background: 'var(--border)', color: 'var(--text)', marginTop: '0.5rem' }}
+                  style={{ background: 'var(--border)', color: 'var(--text)' }}
                 >
                   {cmpLoading ? 'Comparing…' : 'Compare Both Models'}
+                </button>
+                <button
+                  className="btn btn-full"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setDropZoneKey(k => k + 1);
+                  }}
+                  disabled={ftLoading || cmpLoading}
+                  style={{ background: 'var(--border)', color: 'var(--text)' }}
+                >
+                  Try Another
                 </button>
               </div>
             )}
@@ -152,16 +164,16 @@ export default function FineTunePage() {
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
-              <p>Upload an image to see fine-tuned recommendations</p>
+              <p>Upload an image to see Style Focus recommendations</p>
             </div>
           )}
 
           {ftResults && !loading && (
             <>
               <div className="results-header">
-                <h2>Fine-Tune Recommendations</h2>
+                <h2>Style Focus Recommendations</h2>
                 <div className="results-stats">
-                  <span className="stat"><strong>{ftResults.length}</strong> results (fine-tuned)</span>
+                  <span className="stat"><strong>{ftResults.length}</strong> results (Style Focus)</span>
                 </div>
               </div>
               <div className="result-grid">
@@ -178,15 +190,15 @@ export default function FineTunePage() {
                 <h2>Model Comparison</h2>
                 <div className="results-stats">
                   <span className="stat">
-                    <strong>{compareData.base.length}</strong> base ·{' '}
-                    <strong>{compareData.fineTune.length}</strong> fine-tuned
+                    <strong>{compareData.base.length}</strong> Style Match ·{' '}
+                    <strong>{compareData.fineTune.length}</strong> Style Focus
                   </span>
                 </div>
               </div>
               <div className="compare-grid-wrap" style={{ marginTop: '0.5rem' }}>
                 <div className="compare-side-by-side">
                   <div className="compare-side-col">
-                    <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>Base Model</h3>
+                    <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>Style Match</h3>
                     {compareData.base.map((rec, i) => {
                       return (
                         <div className="compare-side-card" key={i}>
@@ -203,7 +215,7 @@ export default function FineTunePage() {
                     })}
                   </div>
                   <div className="compare-side-col">
-                    <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>Fine-Tuned Model</h3>
+                    <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>Style Focus</h3>
                     {compareData.fineTune.map((rec, i) => {
                       return (
                         <div className="compare-side-card" key={i}>

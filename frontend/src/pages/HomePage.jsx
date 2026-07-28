@@ -6,8 +6,7 @@ import SeedBanner from '../components/SeedBanner';
 import DropZone from '../components/DropZone';
 import ResultCard from '../components/ResultCard';
 import FilterBar from '../components/FilterBar';
-import CompareBar from '../components/CompareBar';
-import CompareModal from '../components/CompareModal';
+
 import DetailModal from '../components/DetailModal';
 import LoadingOverlay from '../components/LoadingOverlay';
 
@@ -17,7 +16,6 @@ export default function HomePage() {
   const showToast = useToast();
   const { favorites } = useApp();
 
-  const [totalImages, setTotalImages] = useState(0);
   const [topK, setTopK] = useState(5);
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -26,8 +24,7 @@ export default function HomePage() {
 
   const [lastRecs, setLastRecs] = useState([]);
   const [showFavsOnly, setShowFavsOnly] = useState(false);
-  const [selectedCompareItems, setSelectedCompareItems] = useState([]);
-  const [showCompareModal, setShowCompareModal] = useState(false);
+
   const [detailRec, setDetailRec] = useState(null);
 
 
@@ -47,7 +44,6 @@ export default function HomePage() {
         const res = await fetch(API_BASE_URL + '/api/seed/status');
         const data = await res.json();
         if (!cancelled) {
-          setTotalImages(data.count || 0);
           setSeeded(data.seeded);
         }
       } catch {}
@@ -59,21 +55,12 @@ export default function HomePage() {
     setSelectedFile(file);
   }, []);
 
-  const toggleCompare = useCallback((path, checked) => {
-    setSelectedCompareItems(prev => {
-      if (checked) return [...prev, path];
-      return prev.filter(p => p !== path);
-    });
-  }, []);
-
   const handleRecommend = useCallback(async (targetCategory) => {
     if (!selectedFile) return;
 
     setLoading(true);
     setLastRecs([]);
     setShowFavsOnly(false);
-    setSelectedCompareItems([]);
-
     const startTime = performance.now();
 
     try {
@@ -113,8 +100,6 @@ export default function HomePage() {
       setLoading(true);
       setLastRecs([]);
       setShowFavsOnly(false);
-      setSelectedCompareItems([]);
-
       const formData = new FormData();
       formData.append('file', file);
       const startTime = performance.now();
@@ -137,11 +122,6 @@ export default function HomePage() {
       showToast(err.message);
     }
   }, [topK, showToast]);
-
-  const openCompareModal = useCallback(() => {
-    const items = lastRecs.filter(r => selectedCompareItems.includes(r.image_path));
-    if (items.length < 2) return;
-  }, [lastRecs, selectedCompareItems]);
 
   const filteredRecs = useMemo(() => {
     let recs = lastRecs;
@@ -171,10 +151,6 @@ export default function HomePage() {
 
     return recs;
   }, [lastRecs, activeFilters, showFavsOnly, favorites]);
-
-  const compareItems = useMemo(() => {
-    return lastRecs.filter(r => selectedCompareItems.includes(r.image_path));
-  }, [lastRecs, selectedCompareItems]);
 
   const hasResults = lastRecs.length > 0;
 
@@ -216,7 +192,7 @@ export default function HomePage() {
                   }}
                   disabled={loading}
                 >
-                  Reupload
+                  Try Another
                 </button>
               </div>
             )}
@@ -232,16 +208,8 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3>Discover Your Style</h3>
-              <p>Upload a photo of any outfit to find visually similar items from our catalog of <strong>{(totalImages || 44441).toLocaleString()}</strong> fashion products.</p>
+              <p>Upload a photo of any outfit to find visually similar items from our catalog.</p>
               <div className="empty-state-hints">
-                <div className="empty-hint">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  <span>Drag & drop or click to browse</span>
-                </div>
-                <div className="empty-hint">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                  <span>AI searches 44K+ products</span>
-                </div>
                 <div className="empty-hint">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   <span>View store availability for each result</span>
@@ -254,7 +222,7 @@ export default function HomePage() {
             <LoadingOverlay
               show={true}
               message="Finding similar outfits…"
-              sub={`Searching across ${(totalImages || 44441).toLocaleString()} outfits`}
+              sub=""
             />
           )}
 
@@ -263,8 +231,6 @@ export default function HomePage() {
               <div className="results-header">
                 <h2>Recommendations</h2>
                 <div className="results-stats">
-                  <span className="stat"><strong>{(totalImages || 44441).toLocaleString()}</strong> searched</span>
-                  <span className="stat-divider">·</span>
                   <span className="stat"><strong>{lastRecs.length}</strong> results</span>
                   {lastRecs.elapsed && (
                     <>
@@ -294,26 +260,17 @@ export default function HomePage() {
                   <ResultCard
                     key={rec.image_path + i}
                     rec={rec}
-                    isCompareChecked={selectedCompareItems.includes(rec.image_path)}
-                    onToggleCompare={toggleCompare}
                     onFindSimilar={findSimilar}
                     onOpenDetail={setDetailRec}
                   />
                 ))}
               </div>
 
-              <CompareBar
-                count={selectedCompareItems.length}
-                onCompare={() => setShowCompareModal(true)}
-              />
+
             </>
           )}
         </section>
       </div>
-
-      {showCompareModal && compareItems.length >= 2 && (
-        <CompareModal items={compareItems} onClose={() => { setShowCompareModal(false); setSelectedCompareItems([]); }} />
-      )}
 
       {detailRec && (
         <DetailModal rec={detailRec} onClose={() => setDetailRec(null)} />

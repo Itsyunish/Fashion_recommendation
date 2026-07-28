@@ -387,7 +387,7 @@ export default function LandingPage() {
       <div className="landing-faq-section">
         <div className="landing-faq-inner">
           <h2 className="landing-faq-title">Frequently Asked Questions</h2>
-          <p className="landing-faq-sub">Everything you need to know about PixelCloset</p>
+
           <div className="landing-faq-list">
             {faqs.map((faq, i) => (
               <div

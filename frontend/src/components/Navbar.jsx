@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { API_BASE_URL } from '../config';
 
-export default function Navbar({ currentTab, onTabChange }) {
+export default function Navbar({ currentTab, onTabChange, enableFineTune }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -17,6 +17,7 @@ export default function Navbar({ currentTab, onTabChange }) {
   const tabs = [
     { id: 'home', label: 'Home' },
     { id: 'browse', label: 'Browse' },
+    { id: 'fine-tune', label: 'Style Focus', hidden: !enableFineTune },
     { id: 'about', label: 'About' },
     { id: 'settings', label: 'Settings' },
   ];

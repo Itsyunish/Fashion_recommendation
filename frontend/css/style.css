@@ -2228,6 +2228,9 @@ body {
 /* ── Fine-Tune / Compare ──────────────────────────────────── */
 .ft-btn-row {
   margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .compare-side-by-side {

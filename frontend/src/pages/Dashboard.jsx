@@ -11,7 +11,7 @@ import SettingsPage from './SettingsPage';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { setUser, setEnableFineTune } = useApp();
+  const { setUser, setEnableFineTune, enableFineTune } = useApp();
   const [currentTab, setCurrentTab] = useState('home');
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -48,7 +48,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <Navbar currentTab={currentTab} onTabChange={setCurrentTab} />
+      <Navbar currentTab={currentTab} onTabChange={setCurrentTab} enableFineTune={enableFineTune} />
       <div style={{ display: currentTab === 'home' ? 'block' : 'none' }}>
         <HomePage key="home" />
       </div>
